@@ -1,6 +1,17 @@
 #!/usr/bin/python
 
 """
+@run
+  ./share/texttoroot.py OUT_DIR NUM_INPUT_FILES [CONFIG=config] [IN_DIR=tout] [IN_NAME=frame] [IN_EXT=pgm]
+
+  parameters:
+    OUT_DIR: output directory, necessary
+    NUM_INPUT_FILES: number of input files, necessary
+    CONFIG: IR camera configuration file, optional, default: config
+    IN_DIR: input file directory, optional, default: tout
+    IN_NAME: input file name prefix, optional, default: frame
+    IN_EXT: input file extension, optional, default: pgm
+
 @brief:
   This code converts ADC counts recorded by IR camera into temperature values
   in degree C.
@@ -26,6 +37,15 @@
   TBranch: xpos: X pixel index [0, NXPIXEL )
   TBranch: ypos: Y pixel index [0, NYPIXEL )
   TBranch: temperature at (xpos, ypos)
+
+  - Note that the Flir IR camera starting Y axis pixels from top to bottom
+    Example of [x,y]:
+    [0,0], [1,0], ..., [639,0]
+    [0,1], [1,1], ..., [639,1]
+    ...
+    But, a graph in root starting the Y axis from bottom. So, if one plots the 
+    temperature as a function of [x,y] position in root, the figure is upside down.
+    To avoid this, the Y axis number stored in root is reverted in this code.
 
   TTree: btree
   Frame time information and number of pixels in X and Y directions.
@@ -296,7 +316,11 @@ class TextToRoot:
           #
           for str_count in content:
             xpos[0] = int ( ipix % nxpixel[0] )
-            ypos[0] = int ( ipix / nxpixel[0] )
+
+            #
+            # note the Y axis pixel index is reverted top <--> bottom
+            #
+            ypos[0] = nypixel[0] - int ( ipix / nxpixel[0] ) - 1
             counts = int( str_count )
             temperature[0] = self.counts_to_temperature( counts )
             if (ipix == 0) and (outidx == 0 ):
