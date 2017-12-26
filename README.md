@@ -15,6 +15,7 @@
     + plots of frames in plot/.
     + plots of cooling pipe temperature profile in plot/hist/.
     + plots of fit temperature to get min/max around cooling pipe in plot/fit/.
+    + cooling pipe result also stored in result.root
 
 
 * Installation:

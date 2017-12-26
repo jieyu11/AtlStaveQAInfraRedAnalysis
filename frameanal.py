@@ -89,7 +89,10 @@ class FrameAnalysis:
     self._hist_outdir = self._fig_outdir + "/hist"
     if not os.path.isdir( self._hist_outdir ):
       os.mkdir( self._hist_outdir )
- 
+    self._fit_outdir = self._fig_outdir + "/fit"
+    if not os.path.isdir( self._fit_outdir ):
+      os.mkdir( self._fit_outdir )
+  
     if not os.path.isfile( cfg_name ):
       print ("ERROR:<FRAMEANALYSIS::__INIT__> config file " + cfg_name + " not found.")
       raise Exception(" Config file error! ")
@@ -115,6 +118,14 @@ class FrameAnalysis:
     self._nypixel_stave = int(self._parameters[ "StavePixelY1" ]) - int(self._parameters[ "StavePixelY0" ]) + 1
     self._nxpixel_pipe  = int(self._parameters[ "PipePixelX1" ] ) - int(self._parameters[ "PipePixelX0" ] ) + 1
     self._nypixel_pipe  = int(self._parameters[ "PipePixelY1" ] ) - int(self._parameters[ "PipePixelY0" ] ) + 1
+
+    #
+    # conversion from pixel to CM, pipe should use the same diameter as in Stave's coordinates
+    #
+    self._X0_pipe = self._parameters[ "CMperPixel" ] * ( self._parameters[ "PipePixelX0" ] - self._parameters[ "StavePixelX0" ] )
+    self._Y0_pipe = self._parameters[ "CMperPixel" ] * ( self._parameters[ "PipePixelY0" ] - self._parameters[ "StavePixelY0" ] )
+    self._X1_pipe = self._parameters[ "CMperPixel" ] * self._nxpixel_pipe + self._X0_pipe
+    self._Y1_pipe = self._parameters[ "CMperPixel" ] * self._nypixel_pipe + self._Y0_pipe
 
     #
     # loop over the parameter keys
@@ -189,15 +200,7 @@ class FrameAnalysis:
     _Ycm_stave = self._parameters[ "CMperPixel" ] * self._nypixel_stave
     _h2_stave = ROOT.TH2F( "stave", ";X in cm; Y in cm; Temperature (#circC)", self._nxpixel_stave, 0., _Xcm_stave, self._nypixel_stave, 0., _Ycm_stave )
 
-    #
-    # Pipe should use the same diameter as in Stave's coordinates
-    #
-    _X0_pipe = self._parameters[ "CMperPixel" ] * ( self._parameters[ "PipePixelX0" ] - self._parameters[ "StavePixelX0" ] )
-    _Y0_pipe = self._parameters[ "CMperPixel" ] * ( self._parameters[ "PipePixelY0" ] - self._parameters[ "StavePixelY0" ] )
-    _X1_pipe = self._parameters[ "CMperPixel" ] * self._nxpixel_pipe + _Y0_pipe
-    _Y1_pipe = self._parameters[ "CMperPixel" ] * self._nypixel_pipe + _Y0_pipe
-
-    _h2_pipe = ROOT.TH2F( "pipe", ";X in cm; Y in cm; Temperature (#circC)", self._nxpixel_pipe, _X0_pipe, _X1_pipe, self._nypixel_pipe, _Y0_pipe, _Y1_pipe )
+    _h2_pipe = ROOT.TH2F( "pipe", ";X in cm; Y in cm; Temperature (#circC)", self._nxpixel_pipe, self._X0_pipe, self._X1_pipe, self._nypixel_pipe, self._Y0_pipe, self._Y1_pipe )
 
     if ( self._parameters[ "FrameTmax" ] > -998. ):
       _h2_frame.SetMaximum( self._parameters[ "FrameTmax" ] )
@@ -309,7 +312,7 @@ class FrameAnalysis:
 
     cf1.Update()
 
-    _name = self._hist_outdir + "/h_" + str( h1.GetTitle() ) + ".png"
+    _name = self._fit_outdir + "/h_" + str( h1.GetTitle() ) + ".png"
     cf1.Print( _name )
  
     return (_temp, _mean, _width, _chi2, _ndf)
@@ -329,11 +332,27 @@ class FrameAnalysis:
         and the bottom 40% of the pixels for the bottom pipe curve.
     """
 
+    _roo_out = ROOT.TFile("result.root", "recreate")
+    h1s = [ ROOT.TH1F("top_pipe_temperature",  ";X in cm; Temperature (#circC)",  self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("top_pipe_mean",         ";X in cm; Pipe position Y in cm", self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("top_pipe_width",        ";X in cm; Pipe width Y in cm",    self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("top_pipe_chi2",         ";X in cm; Pipe fit chi2",         self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("top_pipe_ndf",          ";X in cm; Pipe fit ndf",          self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("bot_pipe_temperature",  ";X in cm; Temperature (#circC)",  self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("bot_pipe_mean",         ";X in cm; Pipe position Y in cm", self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("bot_pipe_width",        ";X in cm; Pipe width Y in cm",    self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("bot_pipe_chi2",         ";X in cm; Pipe fit chi2",         self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+            ROOT.TH1F("bot_pipe_ndf",          ";X in cm; Pipe fit ndf",          self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
+          ]
+          
+
     for ix in range ( self._nxpixel_pipe ) :
       ix_raw = int ( ix + self._parameters[ "PipePixelX0" ] )
       ny_1pipe = int ( 0.4 * self._nypixel_pipe )
       #
       # pipe using the top and bottom 40% of the pixels
+      #   top: high Y
+      #   bottom: low Y
       #
       ht1 = ROOT.TH1F( "t"+str(ix), "t"+str(ix), ny_1pipe, 0., float( ny_1pipe ) ) 
       hb1 = ROOT.TH1F( "b"+str(ix), "b"+str(ix), ny_1pipe, 0., float( ny_1pipe ) ) 
@@ -342,14 +361,44 @@ class FrameAnalysis:
         iy_raw = int ( iy + self._parameters[ "PipePixelY0" ] )
 
         if ( iy < ny_1pipe ):
-          ht1.SetBinContent( iy + 1, self.stave_temperature_2d[ iy_raw ][ ix_raw ])
-          ht1.SetBinError( iy + 1, 0.02 * self.stave_temperature_2d[ iy_raw ][ ix_raw ]) # set 2% error
+          #
+          # low Y pixel number for bottom curve
+          #
+          hb1.SetBinContent( iy + 1, self.stave_temperature_2d[ iy_raw ][ ix_raw ])
+          hb1.SetBinError( iy + 1, 0.02 * self.stave_temperature_2d[ iy_raw ][ ix_raw ]) # set 2% error
         elif ( iy >= int(self._nypixel_pipe - ny_1pipe) ):
+          #
+          # high Y pixel number for top curve
+          #
           iy_reset = int(iy - (self._nypixel_pipe - ny_1pipe) + 1 )
-          hb1.SetBinContent( iy_reset, self.stave_temperature_2d[ iy_raw ][ ix_raw ])
-          hb1.SetBinError( iy_reset, 0.02 * self.stave_temperature_2d[ iy_raw ][ ix_raw ]) # set 2% error
-      _t_temp, _t_mean, _t_width, _t_chi2, _t_ndf = self.fit_hist( ht1 )
-      _b_temp, _b_mean, _b_width, _b_chi2, _b_ndf = self.fit_hist( hb1 )
+          ht1.SetBinContent( iy_reset, self.stave_temperature_2d[ iy_raw ][ ix_raw ])
+          ht1.SetBinError( iy_reset, 0.02 * self.stave_temperature_2d[ iy_raw ][ ix_raw ]) # set 2% error
+
+      # returned tuple: (temp, mean, width, chi2, ndf)
+      _t_data = self.fit_hist( ht1 )
+      _b_data = self.fit_hist( hb1 )
+      for idx,val in enumerate(_t_data):
+        h1s[ idx ].SetBinContent( ix+1, val )
+      for idx,val in enumerate(_b_data):
+        jdx = int( idx + 5 )
+        h1s[ jdx ].SetBinContent( ix+1, val )
+
+    c0 = ROOT.TCanvas( 'c0', '', 2000, 600 )
+    # margin: Float_t left, Float_t right, Float_t bottom, Float_t top
+    c0.SetMargin( 0.065, 0.03, 0.15, 0.05)
+ 
+    for h1 in h1s:
+      h1.SetLineWidth(3)
+      h1.GetXaxis().SetTitleSize( 1.3 * h1.GetXaxis().GetTitleSize() );
+      h1.GetYaxis().SetTitleSize( 1.3 * h1.GetYaxis().GetTitleSize() );
+      h1.GetYaxis().SetTitleOffset( 0.65 * h1.GetYaxis().GetTitleOffset() );
+      h1.Draw()
+      c0.Print( self._hist_outdir + "/" + h1.GetName() + ".png" )
+      c0.Print( self._hist_outdir + "/" + h1.GetName() + ".pdf" )
+
+      h1.Write()
+
+    _roo_out.Close()
 
 def print_usage( s_function):
   print ("Usage: " + s_function + " INPUT_ROOT_FILE [CONFIG=config_frame] [OUT_DIR=plot]")
