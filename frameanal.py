@@ -1,11 +1,44 @@
 #!/usr/bin/python
 
 """
-@run
+@run:
+  ./frameanal.py Test.seq
 
 @brief:
+  The code reads the root file produced for a IR camera temperature image, find
+  the cooling pipe temperature profile which is used to detect the potential flaws
+  on the stave.
   
-@functions (class TextToRoot):
+@functions (class FrameAnalysis):
+  __init__ (roo_name, cfg_name = "config_frame", fig_outdir = "plot") :
+    Constructor providing the input root file name, roo_name; 
+    config file name, cfg_name and output figure folder name, fig_outdir.
+    In the config file, set the parameters:
+    - Set the stave starting (X0, Y0) and ending (X1, Y1) pixel indexes, and 
+      similarly for pipe region. 
+    - Set the CM per pixel value, which depends on the IR camera and its lens. 
+    - Set StaveSideL = 0 or 1 to indicate if the initial stave is on L (1) or 
+      J (0) side. In the case of L side, it is flipped to look like J side.
+    - Set LiquidTLow = 0 or 1 to indicate if the liquid passing the cooling 
+      pipe is below (1) or above (0) room temperature.
+    - Set the minimum and maximum temperature for plotting the raw frame, 
+      stave region and pipe region.
+
+  draw_frames():
+    Draw the 2D temperature profile for the raw image, stave region and pipe region
+
+  fit_hist(h1):
+    Fit a gaussian to the input 1D histogram, h1. The X axis of h1 is the pixel number 
+      from Y axis of the pipe region 2D image at a each X axis point. The Y axis of h1
+      is the temperature values at the point.
+    The fit returns a tuple: (temperature, mean position, width, chi2, ndf)
+    The returned temperature is the measurement of the cooling pipe temperature at that
+      point.
+
+  find_pipes():
+    Find the cooling pipes on the pipe region image. Make plots of the temperature
+      distribution along the cooling pipe, together with the fitted result of the mean
+      position, peak width, chi2 and NDF.
 
 @notes:
   This code assumes using python 2.7.10
@@ -19,11 +52,11 @@
 @email: jie.yu@cern.ch
 """
 
-import sys
-import os
-import numpy
-import math
-import ROOT
+import sys   # system
+import os    # operating system
+import numpy # number in python
+import math  # math
+import ROOT  # ROOT from CERN
 
 class FrameAnalysis:
   """
@@ -48,6 +81,7 @@ class FrameAnalysis:
    |     (X0, Y0)                       |
    |                                    |
    | -----------------------------------|  
+   A raw "L" side image is flipped to look like "J" side above.
 
    A stave contains the whole stave including the end of stave card, indicated as Stave (X0, Y0) --> (X1, Y0)
    A pipe part of the stave contains the pipe region, indicated as Pipe (X0, Y0) --> (X1, Y0)
@@ -98,6 +132,12 @@ class FrameAnalysis:
       raise Exception(" Config file error! ")
     _f_cfg = open( cfg_name, 'r')
     for line in _f_cfg:
+      #
+      # skip empty line or started with '#'
+      #
+      if ( len(line) <= 0 ) or line.startswith( '#' ) :
+        continue
+
       item_val = line.split()
       if ( len(item_val) != 2 ): 
         print ("ERROR:<FRAMEANALYSIS::__INIT__> config items expected to be: Item Value. Not the correct style: " + line + ".")
