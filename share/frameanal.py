@@ -23,10 +23,6 @@ import sys
 import os
 import numpy
 import math
-
-# running root in batch mode
-# see: https://root-forum.cern.ch/t/pyroot-in-batch-mode/3105/2
-# sys.argv.append( '-b-' )
 import ROOT
 
 class FrameAnalysis:
@@ -79,8 +75,14 @@ class FrameAnalysis:
   }
 
   def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot") :
+    #
+    # better run root on batch mode
+    #
     ROOT.gROOT.SetBatch()
 
+    #
+    # create the output folders if not exist yet
+    #
     self._fig_outdir = fig_outdir
     if not os.path.isdir( fig_outdir ):
       os.mkdir( fig_outdir )
