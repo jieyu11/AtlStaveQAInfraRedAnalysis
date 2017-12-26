@@ -83,7 +83,6 @@
 @email: jie.yu@cern.ch
 """
 
-#from ROOT import gROOT, TFile, TTree
 import ROOT
 import sys
 import os
