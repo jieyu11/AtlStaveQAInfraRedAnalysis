@@ -449,9 +449,13 @@ def main():
     raise Exception(" Python Version too high. Use 2.x. ")
 
   nargv = len(sys.argv)
+  argv0 = str(sys.argv[0])
   if (nargv <= 1): 
     print ("ERROR:<FRAMEANALYSIS> Please provide: input root file. Missing! Return.")
-    print_usage( str(sys.argv[0]) )
+    print_usage( argv0 )
+    return
+  elif ( argv0 == '-h' ) or ( argv0 == '--help' ):
+    print_usage( argv0 )
     return
   else:
     str_inroo = sys.argv[1];

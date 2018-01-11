@@ -12,10 +12,18 @@
     + an average image is stored in file roo/frame_average.root
 
   - ./frameanal.py roo/frame_average.root
-    + plots of frames in plot/.
-    + plots of cooling pipe temperature profile in plot/hist/.
-    + plots of fit temperature to get min/max around cooling pipe in plot/fit/.
-    + cooling pipe result also stored in result.root
+    + for help, use: "./frameanal.py -h (OR --help)"
+    + modify 'config_frame' correspondingly to your setup
+      1. Pixel number for the Stave region
+      2. Pixel number for the Pipe region
+      3. centimeter per pixel
+      4. is L side
+      5. is temperature lower than room temperature
+      6. maximum and mimimum temperature for plots of Frame, Stave and Pipe
+    + out plots of frames in plot/.
+    + out plots of cooling pipe temperature profile in plot/hist/.
+    + out plots of fit temperature to get min/max around cooling pipe in plot/fit/.
+    + out cooling pipe result also stored in result.root
 
 
 * Installation:
@@ -35,3 +43,5 @@
   - ImageMagick (needed for command 'convert') 
     + download: http://cactuslab.com/imagemagick/
 
+  - ROOT (from CERN to make plots and store data)
+    + download: https://root.cern.ch/downloading-root
