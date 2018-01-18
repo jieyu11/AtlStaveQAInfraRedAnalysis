@@ -325,7 +325,7 @@ class TextToRoot:
             if (ipix == 0) and (outidx == 0 ):
               print ( "INFO:<TEXTTOROOT::CONVERT> ix: " + str(xpos[0]) + " iy: " +str(ypos[0]) + " count: " + str(counts) + " T: " + str(temperature[0]) )
 
-            avg_temperature_2d[ypos][xpos] += temperature[0] / n_inputs
+            avg_temperature_2d[ypos[0]][xpos[0]] += temperature[0] / n_inputs
   
             ipix = ipix + 1
             atree.Fill()
