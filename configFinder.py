@@ -55,9 +55,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   c2 = ROOT.TCanvas("c2")
   c2.cd()
   histcanny.Draw("colz")
-  ROOT.gStyle.SetPalette(51)
   c2.Update()
-  #c2.Print("plot/CannyImage.png")
 
   # Find the Four Corners of the Pipe Area
 
