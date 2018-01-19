@@ -58,6 +58,8 @@ import numpy # number in python
 import math  # math
 import ROOT  # ROOT from CERN
 
+import configFinder as cf
+
 class FrameAnalysis:
   """
     To find out the possible flaws on a stave, one needs to check the non-uniformity on the cooling pipe temperature
@@ -467,6 +469,8 @@ def main():
   str_outdir = "plot"
   if (nargv >= 4):
     str_outdir = sys.argv[3];
+
+  cf.FindPoints( str_inroo, str_cfg)
 
   ist_frmana = FrameAnalysis( str_inroo, str_cfg, str_outdir )
   ist_frmana.draw_frames()
