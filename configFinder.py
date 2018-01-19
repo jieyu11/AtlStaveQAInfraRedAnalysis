@@ -44,8 +44,10 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
 
   #Makes a Canny Image that can be checked
   histcanny = ROOT.TH2F("cannyplot","Canny Plot;xPixel;yPixel",xPixels,0,xPixels,yPixels,0,yPixels)
+  orighist = ROOT.TH2F("originalplot","OriginalPlot;xPixel;yPixel",xPixels,0,xPixels,yPixels,0,yPixels)
   for i in range(xPixels):
     for j in range(yPixels):
+      orighist.Fill(i,j,image[i][j])
       if image2[i,j] > 100:
         histcanny.Fill(i,j,image2[i][j])
       else:
@@ -65,6 +67,8 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   VertData = []  #The average x value of each vertical line
   ShortHorData = []
 
+  orighist.Draw("colz")
+ 
 #------------------------------------------------------------------------------
   try:
     #Find Long Horiz Lines
@@ -86,7 +90,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
       c2.lines += [lineObj]
       lineObj.Draw()
 
-    HorData = np.sort(HorData)
+    HorData = np.sort(HorData) 
     CentSep = np.amax(abs(HorData-240))
     while CentSep > 50:
       lenHor = np.size(HorData)
@@ -103,7 +107,6 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   except:
     print("Failed to Find Long Lines")
 
- 
 #------------------------------------------------------------------------------   
 #Find Short Vert Lines
   try:
@@ -137,7 +140,19 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
       VertData = np.delete(VertData,0) 
       VertSep = np.amax(VertData)-np.amin(VertData)
     lineData += [np.amin(VertData)]
-    
+
+    #Put the found area on the plot 
+    for i in range(2):
+      lineObj = ROOT.TLine(lineData[2],lineData[i],lineData[3],lineData[i])
+      lineObj2 = ROOT.TLine(lineData[i+2],lineData[0],lineData[i+2],lineData[1])
+      lineObj.SetLineColor(1)
+      lineObj2.SetLineColor(1)
+      lineObj.SetLineWidth(1)
+      lineObj2.SetLineWidth(1)
+      c2.lines += [lineObj]
+      lineObj.Draw()
+      c2.lines += [lineObj2]
+      lineObj2.Draw()
 
     x0=lineData[3]
     x1=lineData[2]
@@ -154,6 +169,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   #Print all of the Fit Lines
   c2.Update()
   c2.Print("AllFoundLines.png")
+  c2.Print("AllFoundLines.root")
 
   #Get Corrected Zoomed Figure
   DxcutL = int(fltxPercentCutL*Dx)
@@ -164,6 +180,9 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   x1Cut = x1-DxcutR
   y0Cut = y0+Dycut
   y1Cut = y1-Dycut
+
+  
+
   
   c2.Close()
 
@@ -207,10 +226,20 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   if intStaveSideL == 0:
     y0EOS = y0
     y1EOS = y1 + int((y1-y0)*0.4)
-  else:
+  else: 
     y0EOS = y0 - int((y1-y0)*0.4)
-    y1EOS = y1
- 
+    y1EOS = y1 
+
+  if intStaveSideL ==1:
+    yorig = [y0EOS,y0Cut,y1EOS,y1Cut]
+    y0EOS = abs(yorig[2] - yPixels) 
+    y0Cut = abs(yorig[3] - yPixels)
+    y1EOS = abs(yorig[0] - yPixels)
+    y1Cut = abs(yorig[1] - yPixels)
+
+  
+
+
   #Put in the stave parameters
   Output.write("StavePixelX0 "+str(x0)+"\n")
   Output.write("StavePixelY0 "+str(y0EOS)+"\n")
