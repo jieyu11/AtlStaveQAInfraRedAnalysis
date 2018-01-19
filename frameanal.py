@@ -317,7 +317,7 @@ class FrameAnalysis:
     h1.Draw()
 
     nbins = h1.GetNbinsX()
-    f1 = ROOT.TF1( "FitGaus", "gaus", 0., float(nbins) ) 
+    f1 = ROOT.TF1( "FitGaus", "gaus",0.0, float(nbins) ) 
     if ( self._parameters[ "LiquidTLow" ] > 0 ):
       f1.SetParLimits(0, -100., 10.)
     else:
@@ -330,7 +330,7 @@ class FrameAnalysis:
     #constraints on peak position
     f1.SetParameter(1, nbins/2.);
     f1.SetParLimits(1, nbins/4., nbins * 3 / 4.);
-    h1.Fit(f1) # Fit(f1,"0") meaning no draw on the canvas
+    h1.Fit(f1,"Q") # Fit(f1,"0") meaning no draw on the canvas
 
     # 3 parameters: temperature, mean, sigma
     _pars  = numpy.zeros(3, dtype=float)
