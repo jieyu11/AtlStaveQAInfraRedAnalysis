@@ -30,16 +30,16 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
     for j in range(yPixels):
       Tree.GetEntry(i*yPixels + j)      #Reading from an average frame
       #!!!!Tree.GetEntry(j*xPixels + i) #Reading from a single frame
-      image[i][j] = _temperature 
+      image[i][j] = _temperature[0] 
 
   # Make The Canny Image
   v = np.median(image)
+
   sigma = 0.33
   lower = int(max(0,(1-sigma)*v))
   upper = int(min(255,(1+sigma)*v))
 
-  image = np.uint8(image)
-  laplacian = cv2.Canny(image,lower,upper)
+  laplacian = cv2.Canny(np.uint8(image),lower,upper)
   image2 = laplacian
 
   #Makes a Canny Image that can be checked
@@ -48,7 +48,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   for i in range(xPixels):
     for j in range(yPixels):
       orighist.Fill(i,j,image[i][j])
-      if image2[i,j] > 100:
+      if image2[i][j] > 100:
         histcanny.Fill(i,j,image2[i][j])
       else:
         histcanny.Fill(i,j,0)
@@ -180,10 +180,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   x1Cut = x1-DxcutR
   y0Cut = y0+Dycut
   y1Cut = y1-Dycut
-
-  
-
-  
+ 
   c2.Close()
 
   #Make the output file
@@ -191,25 +188,28 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   Output.write("#\n# frame parameters used in frameanal.py\n#\n")
 
   #Find the EndofStaveCard
-  avgStaveTemp = 0
-  avgAboveTemp = 0
-  avgBelowTemp = 0
+  avgStaveTemp = 0.0
+  avgAboveTemp = 0.0
+  avgBelowTemp = 0.0
   stavePixels = (x1Cut-x0Cut)*(y1Cut-y0Cut)
   EOSCardPixels = 300 
   for i in range(xPixels):
     for j in range(yPixels):
       if i > x0Cut and i < x1Cut:
         if j > y0Cut and j < y1Cut:
-          avgStaveTemp += float(image[i][j])
+          avgStaveTemp = avgStaveTemp + image[i][j]
       if i > x0Cut and i < (x0Cut+30):
         if j > y1 and j < (y1+10):
-          avgAboveTemp += float(image[i][j])
+          avgAboveTemp += image[i][j]
         if j > y0 - 10 and j < y0:
-          avgBelowTemp += float(image[i][j]) 
-
+          avgBelowTemp += image[i][j] 
+      
   avgStaveTemp = avgStaveTemp/stavePixels
   avgAboveTemp = avgAboveTemp/EOSCardPixels
   avgBelowTemp = avgBelowTemp/EOSCardPixels
+
+  
+
 
   #Get Which Side from the Plot
   if avgStaveTemp > 20: 
@@ -237,9 +237,6 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
     y1EOS = abs(yorig[0] - yPixels)
     y1Cut = abs(yorig[1] - yPixels)
 
-  
-
-
   #Put in the stave parameters
   Output.write("StavePixelX0 "+str(x0)+"\n")
   Output.write("StavePixelY0 "+str(y0EOS)+"\n")
@@ -255,7 +252,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   #Put in the Other Constants
   Output.write("CMperPixel 0.23272727\n")
   Output.write("StaveSideL "+str(intStaveSideL)+"\n")    
-
+  
   #State Whether it is hot or cold
   if avgStaveTemp > 20.:
     intLowTValue = 0
@@ -270,11 +267,11 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   else:
     intLowTValue = 1
     #Assuming Run at -55C
-    intMaxPlotTemp  = -10
+    intMaxPlotTemp  = 20
     intMinPlotTemp  = -40
-    intMaxStaveTemp = -20
+    intMaxStaveTemp = -10
     intMinStaveTemp = -40
-    intMaxPipeTemp  = -30
+    intMaxPipeTemp  = -20
     intMinPipeTemp  = -40
   Output.write("LiquidTLow "+str(intLowTValue)+"\n")
 
