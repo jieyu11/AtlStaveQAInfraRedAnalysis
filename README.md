@@ -13,7 +13,9 @@
 
   - ./frameanal.py roo/frame_average.root
     + for help, use: "./frameanal.py -h (OR --help)"
-    + modify 'config_frame' correspondingly to your setup
+    + the 'config_frame' is automatically generated using configFinder.py
+      1. If you do not want to generate a new config file use: ./frameanal.py -mc (OR --manualconfig)
+    + 'config_frame' is measured corresponding to your setup. Below are the values configFinder.py finds
       1. Pixel number for the Stave region
       2. Pixel number for the Pipe region
       3. centimeter per pixel
@@ -45,3 +47,6 @@
 
   - ROOT (from CERN to make plots and store data)
     + download: https://root.cern.ch/downloading-root
+
+  - OpenCV (needed for configFinder.py allows for image manipulation)
+    + download: https://opencv.org/releases.html or it can also be installed by Homebrew or MacPorts

@@ -451,7 +451,10 @@ def main():
     raise Exception(" Python Version too high. Use 2.x. ")
 
   nargv = len(sys.argv)
+
   argv0 = str(sys.argv[0])
+
+  bolFindConfig = True
   if (nargv <= 1): 
     print ("ERROR:<FRAMEANALYSIS> Please provide: input root file. Missing! Return.")
     print_usage( argv0 )
@@ -459,18 +462,28 @@ def main():
   elif ( argv0 == '-h' ) or ( argv0 == '--help' ):
     print_usage( argv0 )
     return
+  elif ( sys.argv[1] == '-mc') or ( sys.argv[1] == '--manualconfig' ):
+    print ("Usage: Manual configuration overide. Will use config settings from old config_frame")
+    bolFindConfig = False
+    str_inroo = sys.argv[2];
   else:
     str_inroo = sys.argv[1];
 
   str_cfg = "config_frame"
-  if (nargv >= 3):
+  if (nargv >= 3) and bolFindConfig == True:
     str_cfg = sys.argv[2];
+  elif (nargv >= 4) and bolFindConfig == False:
+    str_cfg = sys.argv[3];
 
   str_outdir = "plot"
-  if (nargv >= 4):
+  if (nargv >= 4) and bolFindConfig == True:
     str_outdir = sys.argv[3];
+  elif (nargv >= 5) and bolFindConfig == False:
+    str_outdir = sys.argv[4];
 
-  cf.FindPoints( str_inroo, str_cfg)
+  if bolFindConfig == True:
+    print ("Usage: Finding frame configuration...")
+    cf.FindPoints( str_inroo, str_cfg)
 
   ist_frmana = FrameAnalysis( str_inroo, str_cfg, str_outdir )
   ist_frmana.draw_frames()
