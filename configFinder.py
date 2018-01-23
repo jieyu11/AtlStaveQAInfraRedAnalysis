@@ -18,19 +18,38 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   This function takes an input root stave image and finds all of the appropriate
   locations on the stave and creates a config file.
   """
-  #Load in the file
-  imageFile = ROOT.TFile(strImageFile,"read")
+
+  try:
+    #Load in the file
+    imageFile = ROOT.TFile(strImageFile,"read")
+  except:
+    print("Failed to Load ImageFile")
+    return
   Tree = imageFile.Get("atree")
   _temperature = np.zeros(1,dtype=float)
   Tree.SetBranchAddress("temperature",_temperature)
 
   #Load the image from TTree
   image = np.full((xPixels,yPixels),-999) #A tree full of -999 used as a placeholder
-  for i in range(xPixels):
-    for j in range(yPixels):
-      Tree.GetEntry(i*yPixels + j)      #Reading from an average frame
-      #!!!!Tree.GetEntry(j*xPixels + i) #Reading from a single frame
-      image[i][j] = _temperature[0] 
+
+
+  bolAvgFrame = False
+  if "frame_average.root" in strImageFile:
+    bolAvgFrame = True
+  
+  if bolAvgFrame == True:  
+    for i in range(xPixels):
+      for j in range(yPixels):
+        Tree.GetEntry(i*yPixels + j)      #Reading from an average frame
+        image[i][j] = _temperature[0] 
+
+  else:  
+    for i in range(xPixels):
+      for j in range(yPixels):
+        Tree.GetEntry(j*xPixels + i) #Reading from a single frame
+        image[i][j] = _temperature[0] 
+
+
 
   # Make The Canny Image
   v = np.median(image)
@@ -284,14 +303,34 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   Output.write("PipeTmin "+str(intMinPipeTemp)+"\n")
 
   Output.close()
+  return [x0Cut,x1Cut,y0Cut,y1Cut,intStaveSideL,intLowTValue]
 
-'''
+"""
 if __name__ == '__main__':
-  FindPoints("roo/frame_average.root","configure") 
+  x0hist = ROOT.TH1F("x0hist","X0 values found;xPixel;N Entries",10,89,99) 
+  x1hist = ROOT.TH1F("x1hist","X1 values found;xPixel;N Entries",10,598,608) 
+  y0hist = ROOT.TH1F("y0hist","Y0 values found;yPixel;N Entries",10,223,233) 
+  y1hist = ROOT.TH1F("y1hist","Y1 values found;yPixel;N Entries",10,257,267) 
+  staveSideHist = ROOT.TH1F("staveSideHist","Side Found;LSide?;N Entries",2,0,1) 
+  TempHist = ROOT.TH1F("TempHist","AvgTemperature on Stave;Temperature [#circC];N Entries",200,-50,50) 
+  for i in range(200):
+    Output = FindPoints("roo/frame_"+str(i)+".root","configure")
+    x0hist.Fill(Output[0])
+    x1hist.Fill(Output[1])
+    y0hist.Fill(Output[2])
+    y1hist.Fill(Output[3])
+    staveSideHist.Fill(Output[4])
+    TempHist.Fill(Output[5])
+    print(str(i)+" " +str(Output[0])+" "+str(Output[1])+" "+str(Output[2])+" "+str(Output[3])+" "+str(Output[4])+" "+str(Output[5]))
 
-'''
-
-
-
-
-
+  c1= ROOT.TCanvas("c1")
+  c1.cd()    
+  x0hist.Draw()
+  c1.Print("x0hist.png")
+  x1hist.Draw()
+  c1.Print("x1hist.png")
+  y0hist.Draw()
+  c1.Print("y0hist.png")
+  y1hist.Draw()
+  c1.Print("y1hist.png")
+"""
