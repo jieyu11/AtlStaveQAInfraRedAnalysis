@@ -50,3 +50,6 @@
 
   - OpenCV (needed for configFinder.py allows for image manipulation)
     + download: https://opencv.org/releases.html or it can also be installed by Homebrew or MacPorts
+    + install Homebrew on Mac: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+    + install OpenCV: brew install opencv
+
