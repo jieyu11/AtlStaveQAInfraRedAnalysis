@@ -273,7 +273,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   Output.write("StaveSideL "+str(intStaveSideL)+"\n")    
   
   #State Whether it is hot or cold
-  if avgStaveTemp > 20.:
+  if avgStaveTemp > 25.:
     intLowTValue = 0
     #Assuming Run at 50C
     intMaxPlotTemp  = 50
@@ -283,7 +283,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
     intMaxPipeTemp  = 50
     intMinPipeTemp  = 40
 
-  else:
+  elif avgStaveTemp <15.:
     intLowTValue = 1
     #Assuming Run at -55C
     intMaxPlotTemp  = 20
@@ -292,6 +292,16 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
     intMinStaveTemp = -40
     intMaxPipeTemp  = -20
     intMinPipeTemp  = -40
+  else:
+    intLowTValue = 2 #This will cause the fits to not happen
+    #Assuming Just Running Around Room Temp
+    intMaxPlotTemp  = 25
+    intMinPlotTemp  = 15
+    intMaxStaveTemp = 25
+    intMinStaveTemp = 15
+    intMaxPipeTemp  = 15
+    intMinPipeTemp  = 25
+
   Output.write("LiquidTLow "+str(intLowTValue)+"\n")
 
   #From Temp Values
@@ -305,6 +315,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   Output.close()
   return [x0Cut,x1Cut,y0Cut,y1Cut,intStaveSideL,intLowTValue]
 
+#Below is a short program that will get all of the fit data out of a set of frames
 """
 if __name__ == '__main__':
   x0hist = ROOT.TH1F("x0hist","X0 values found;xPixel;N Entries",10,89,99) 
