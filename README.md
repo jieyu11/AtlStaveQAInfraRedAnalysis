@@ -52,4 +52,8 @@
     + download: https://opencv.org/releases.html or it can also be installed by Homebrew or MacPorts
     + install Homebrew on Mac: /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
     + install OpenCV: brew install opencv
+      Make sure of doing: mkdir -p /Users/jieyu/Library/Python/2.7/lib/python/site-packages; 
+                          echo 'import site; site.addsitedir("/usr/local/lib/python2.7/site-packages")' >> /Users/jieyu/Library/Python/2.7/lib/python/site-packages/homebrew.pth
+        after installing opencv
+
 
