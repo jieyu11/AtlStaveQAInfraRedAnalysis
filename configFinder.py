@@ -13,7 +13,7 @@ import numpy as np
 import cv2
 import ROOT
 
-def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercentCutL=0.05,fltxPercentCutR=0.023,fltyPercentCut=0.17):
+def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercentCutL=0.05,fltxPercentCutR=0.023,fltyPercentCut=0.20):
   """
   This function takes an input root stave image and finds all of the appropriate
   locations on the stave and creates a config file.
