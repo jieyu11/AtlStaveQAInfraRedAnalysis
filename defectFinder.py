@@ -243,10 +243,10 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
     Hist.SetMinimum(Offset -3)
   elif Offset < -10:
     Hist.SetMaximum(Offset +5)
-    Hist.SetMinimum(Offset -1)
+    Hist.SetMinimum(Offset -3)
   elif Offset < 10:
     Hist.SetMaximum(Offset +4)
-    Hist.SetMinimum(Offset -1)
+    Hist.SetMinimum(Offset -2)
   else:
     Hist.SetMaximum(Offset+2)
     Hist.SetMinimum(Offset-2)
