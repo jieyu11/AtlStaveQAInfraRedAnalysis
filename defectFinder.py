@@ -76,11 +76,11 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
     - Fit 1: A fit to HistPeaks using a gaussian function
     - Fit 2: A fit to HistPeaks using the width and height found from Fit 1 
               using a gaussian with an offset.
-    - Fit 3: A fit to HistInverted using the width and height from the best of
+    - Fit 3: A fit to HistClone using the width and height from the best of
               Fit 1 and 2. This fit is only kept if it is better than the best
               previous fit.
-    - Height Finding: Fit 3 is used again on HistInverted2
-             (HistInverted without the bandpass filter). 
+    - Height Finding: Fit 3 is used again on HistClone2
+             (HistClone without the bandpass filter). 
     - Cuts:
         @ Position- TSpectrum peak value must be within 2 cm of fitted value
                      Peak maximum must not be within 2 cm of edge
@@ -101,25 +101,27 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
   Xmax =  Info[2] 
   npeaks = 20
   objSpectrum = ROOT.TSpectrum(2*npeaks)
-  HistInverted =  Hist.Clone()
-     
-  for i in range(nBins):
-    HistInverted.SetBinContent(i+1,-1*Hist.GetBinContent(i+1)) 
-  HistInverted2 = HistInverted.Clone() 
+  HistClone =  Hist.Clone()
+
+  bolTempIsHot = TempIsHot(Hist)
+  if bolTempIsHot == True:
+    for i in range(nBins):
+      HistClone.SetBinContent(i+1,-1*Hist.GetBinContent(i+1)) 
+  HistClone2 = HistClone.Clone() 
 
   #FINDING FLAWS---------------------------------------------------------- 
-  HistInverted.Draw()
-  HistInverted = BandPassFFT(HistInverted,2,200) 
-  HistBackground = objSpectrum.Background(HistInverted,17,"")
+  HistClone.Draw()
+  HistClone = BandPassFFT(HistClone,2,200) 
+  HistBackground = objSpectrum.Background(HistClone,17,"")
 
-  HistPeaks = HistInverted - HistBackground
+  HistPeaks = HistClone - HistBackground
 
   sigma = 6
   threshold = 0.05
-  nfound = objSpectrum.Search(HistInverted,sigma,"noMarkov",threshold)
+  nfound = objSpectrum.Search(HistClone,sigma,"noMarkov",threshold)
   peakPosX = objSpectrum.GetPositionX()
 
-  HistInverted.Draw()
+  HistClone.Draw()
   HistBackground.Draw("same")
   if bolVerb > 0:
     canvas.Print(fitdir+files[5:11]+strPipeLab+"BackgroundInvertPlot.png")
@@ -180,7 +182,7 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
     fit3.SetParLimits(3,-1,1)
     fit3.SetParLimits(4,-2,2)
     fit3.SetParameters(FitHeight,FitPeakPosX,FitSigma,0,0) 
-    HistInverted.Fit(fit3,"Q","",peakPosX[i]-sigma,peakPosX[i]+sigma)
+    HistClone.Fit(fit3,"Q","",peakPosX[i]-sigma,peakPosX[i]+sigma)
     #Get the fit info
     Fit3PeakPosX = fit3.GetParameter(1)
     Fit3Sigma = abs(fit3.GetParameter(2))
@@ -206,7 +208,7 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
     fit4.SetParLimits(3,-50,50)
     fit4.SetParLimits(4,-2,2)
     fit4.SetParameters(FitHeight,FitPeakPosX,FitSigma,0,0) 
-    HistInverted2.Fit(fit4,"Q","",peakPosX[i]-sigma,peakPosX[i]+sigma)
+    HistClone2.Fit(fit4,"Q","",peakPosX[i]-sigma,peakPosX[i]+sigma)
     FitHeightMeas = fit4.GetParameter(0)
 
     AcceptX = 2         #   Any peak that is found that is not +/- acceptace from
@@ -216,10 +218,15 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
                         # (This seems to be about right for the flaw size 
                         # to implimented size ratio)
 
+    TScale = 1
+    if bolTempIsHot == False:
+      TScale = 2
+
+
     if FitPeakPosX > peakPosX[i] -AcceptX and FitPeakPosX < peakPosX[i]+AcceptX and\
        FitPeakPosX>Xmin+AcceptX and FitPeakPosX< Xmax-AcceptX and\
-       FitGoodness < 0.05:
-      if abs(FitSigma*SizeConstant)<8 and abs(FitSigma*SizeConstant) > 1 and FitHeight > 0.2: 
+       FitGoodness < 0.05*TScale:
+      if abs(FitSigma*SizeConstant)<8 and abs(FitSigma*SizeConstant) > 1 and FitHeightMeas > 0.25*TScale: 
         MFlaws = np.append(MFlaws,[FitLevel,FitPeakPosX,FitSigma,FitHeightMeas,FitGoodness])
   
   #PLOTTING---------------------------------------------------------------
@@ -235,10 +242,10 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
     Hist.SetMaximum(Offset +1)
     Hist.SetMinimum(Offset -3)
   elif Offset < -10:
-    Hist.SetMaximum(Offset +4)
+    Hist.SetMaximum(Offset +5)
     Hist.SetMinimum(Offset -1)
   elif Offset < 10:
-    Hist.SetMaximum(Offset +3)
+    Hist.SetMaximum(Offset +4)
     Hist.SetMinimum(Offset -1)
   else:
     Hist.SetMaximum(Offset+2)
@@ -288,6 +295,25 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
     DefectInfo = np.append(DefectInfo,float(MFlaws[i*5+4]))               #Fit Goodness
     DefectInfo = np.append(DefectInfo,MFlaws[i*5])                        #Fit Level 
   return DefectInfo
+
+#------------------------------------------------------------------------------
+def TempIsHot(Hist):
+  """
+    This takes a histogram and finds if it is hot or cold 
+  """
+  Info = GetHistInfo(Hist)
+  nBins = Info[0]
+  Xmin = Info[1]
+  Xmax = Info[2]
+  fittemp = ROOT.TF1("Offset","[0]",Xmin,Xmax)
+  Hist.Fit(fittemp,"Q nodraw","",Xmin,Xmax)
+  AvgTemp = fittemp.GetParameter(0)
+  if AvgTemp > 30:
+    return True
+  elif AvgTemp < 10:
+    return False
+  else:
+    print("WARNING: Temperature values are too close to ambient for decent results")
 
 #------------------------------------------------------------------------------
 def BandPassFFT(Hist,CutOffL,CutOffH):
@@ -399,7 +425,7 @@ def DefectAnalysis(Defects,outdir,Canvas):
     Width = np.append(Width,Defects[i*nThings+3])
     Height = np.append(Height,Defects[i*nThings+4])
     Goodness = np.append(Goodness,Defects[i*nThings+5])
-  print(Width)
+
   mg = ROOT.TMultiGraph()
   Canvas.Clear()
   WHGraph = []
@@ -454,7 +480,7 @@ def main():
     os.mkdir( fitdir )
 
   C1 = ROOT.TCanvas("c1","c1",0,0,2000,600)
-  
+
   Def = GetDefects(inputfile,outdir,fitdir,C1,bolVerb)
 
   if bolVerb > 0:
@@ -479,8 +505,7 @@ def main():
   
   DefectAnalysis(Def,outdir,C1)
   #-------------------------------
- """ 
-
+  """
 
 if __name__ == "__main__":
   main()
