@@ -27,6 +27,11 @@
     + out plots of fit temperature to get min/max around cooling pipe in plot/fit/.
     + out cooling pipe result also stored in result.root
 
+  - ./defectFinder.py result.root
+    + uses cooling pipe result to find flaws on the stave
+    + for all fits in the defectFinding algorithm, use ./defectFinder.py -v (OR --verbose) result.root
+    + out plots of both pipes with defects found on top in flawplots/
+    + out plots fit results (if turned on) for each flaw in flawplots/fits/
 
 * Installation:
 
