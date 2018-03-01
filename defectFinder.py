@@ -2,7 +2,17 @@
 
 """
 @run:
-  ./defectFinder.py plot/result.py
+  ./defectFinder.py [option] [files]
+
+  [option]:   This can be -v or --verbose, prints all fit results
+  [files]:    This can be any number of result.root files. If exactly two
+              are specified it will do a comparison of the two images. Otherwise
+              it will only plot the first one, and then you can then 
+              use user commands to plot the rest.
+              
+              The output files are saved to either flawplots/ or flawplots/fits/
+              which it will create. It gives each plot a name using the name of the
+              folder containing the result.root file.
 
 @brief:
   The code reads the output root file produced from frameanal.py to find flaws 
@@ -59,7 +69,7 @@ def GetHistInfo(Histogram):
 #------------------------------------------------------------------------------
 #FindPeaks---------------------------------------------------------------------
 
-def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], strType = "temperature;1"):
+def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0, strType = "temperature;1"):
   """
   Uses the information along the cooling pipe to find the flaws along the pipe.
   It has three main parts.
@@ -103,6 +113,9 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
   objSpectrum = ROOT.TSpectrum(2*npeaks)
   HistClone =  Hist.Clone()
 
+  filename = files.split('/')
+  filename = filename[-2]
+ 
   bolTempIsHot = TempIsHot(Hist)
   if bolTempIsHot == True:
     for i in range(nBins):
@@ -124,7 +137,7 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
   HistClone.Draw()
   HistBackground.Draw("same")
   if bolVerb > 0:
-    canvas.Print(fitdir+files[5:11]+strPipeLab+"BackgroundInvertPlot.png")
+    canvas.Print(fitdir+filename+strPipeLab+"BackgroundInvertPlot.png")
  
   PeakPosArray = np.zeros(nfound) 
   for i in range(nfound):
@@ -172,7 +185,7 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
       FitGoodness = Fit2Goodness
       FitLevel = 1
       if bolVerb > 0:
-        canvas.Print(fitdir+files[5:11]+strPipeLab+str(i)+"_FitResults.png")
+        canvas.Print(fitdir+filename+strPipeLab+str(i)+"_FitResults.png")
 
     #Find Flaws Method 3----------
     fit3 = ROOT.TF1("pgaus3","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]+[4]*x",Xmin,Xmax)
@@ -198,7 +211,7 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
       FitGoodness = Fit3Goodness
       FitLevel = 2
       if bolVerb > 0:
-        canvas.Print(fitdir+files[5:11]+strPipeLab+str(i)+"_FitResults.png")
+        canvas.Print(fitdir+filename+strPipeLab+str(i)+"_FitResults.png")
 
     #Height Finding
     fit4 = ROOT.TF1("pgaus4","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]+[4]*x",Xmin,Xmax)
@@ -281,8 +294,8 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0,Boixes = [], str
     Boxes[i+BoxesL].Draw()
 
   if bolVerb > 0: 
-    canvas.Print(outdir+files[5:11]+strPipeLab+"Tpeaks.root")
-    canvas.Print(outdir+files[5:11]+strPipeLab+"Tpeaks.png")
+    canvas.Print(outdir+filename+strPipeLab+"Tpeaks.root")
+    canvas.Print(outdir+filename+strPipeLab+"Tpeaks.png")
 
   #PREPPINGDEFECTINFO-----------------------------------------------------
   DefectInfo = []
@@ -350,6 +363,42 @@ def BandPassFFT(Hist,CutOffL,CutOffH):
   return HistHPass  
 
 #------------------------------------------------------------------------------
+def GetDefects2(inputfile1,inputfile2,outdir,fitdir,C1,bolVerb = 0):
+  """
+  This takes tow input files and gets all of the defects and prints all of the 
+  relevant information. This is necessary for printing the boxes on a single canvas
+  """
+  DefectInfo = []
+  C1.Clear()
+  C1.Divide(1,4)
+  C1.cd(1)
+  global Boxes
+  Boxes = []
+  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile1,outdir,fitdir,C1,0,bolVerb))
+  C1.cd(2) 
+  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile2,outdir,fitdir,C1,0,bolVerb)) 
+  #DefectsTop = len(Boxes)
+  #for i in range(DefectsTop):
+  #  Boxes[i].Draw()
+  C1.cd(3)
+  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile1,outdir,fitdir,C1,1,bolVerb))  
+  C1.cd(4)
+  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile2,outdir,fitdir,C1,1,bolVerb))
+  #for i in range(len(Boxes)-DefectsTop):
+  #  Boxes[i+DefectsTop].Draw()
+
+  filename1 = inputfile1.split('/')
+  filename1 = filename1[1]
+  filename2 = inputfile2.split('/')
+  filename2 = filename2[1]
+
+  C1.Print(outdir+filename1+filename2+"-AllFlaws.png")
+  C1.Print(outdir+filename1+filename2+"-AllFlaws.root")
+
+  return 
+
+
+#------------------------------------------------------------------------------
 def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   """
   This takes an input file and gets all of the defects and prints all of the 
@@ -361,16 +410,20 @@ def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   C1.cd(1)
   global Boxes
   Boxes = []
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile,outdir,fitdir,C1,0,bolVerb,Boxes)) 
+  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile,outdir,fitdir,C1,0,bolVerb)) 
   DefectsTop = len(Boxes)
   for i in range(DefectsTop):
     Boxes[i].Draw()
   C1.cd(2)
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile,outdir,fitdir,C1,1,bolVerb,Boxes))
+  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile,outdir,fitdir,C1,1,bolVerb))
   for i in range(len(Boxes)-DefectsTop):
     Boxes[i+DefectsTop].Draw()
-  C1.Print(outdir+inputfile[5:11]+"AllFlaws.png")
-  C1.Print(outdir+inputfile[5:11]+"AllFlaws.root")
+
+  filename = inputfile.split('/')
+  filename = filename[-2]
+
+  C1.Print(outdir+filename+"-AllFlaws.png")
+  C1.Print(outdir+filename+"-AllFlaws.root")
 
 
 
@@ -378,7 +431,7 @@ def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   return DefectInfo
 
 #------------------------------------------------------------------------------
-def PrintDefectInfo(DefectInfo,intLine):
+def PrintDefectInfo(DefectInfo,intLine=-1):
   """
   This prints the DefectInfo array out into an easily readable format. 
   If intLine = -1 it prints all the information
@@ -391,11 +444,93 @@ def PrintDefectInfo(DefectInfo,intLine):
   nThings = 7
   if bolPrintAll == True:
     for i in range(len(DefectInfo)/nThings):
-      print " {0:2}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(int(DefectInfo[i*nThings]),int(DefectInfo[i*nThings+1]),DefectInfo[i*nThings+2],DefectInfo[i*nThings+3],DefectInfo[i*nThings+4],DefectInfo[i*nThings+5],int(DefectInfo[i*nThings+6]))
+      print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[i*nThings],int(DefectInfo[i*nThings+1]),DefectInfo[i*nThings+2],DefectInfo[i*nThings+3],DefectInfo[i*nThings+4],DefectInfo[i*nThings+5],int(DefectInfo[i*nThings+6]))
   else:  
-    print " {0:2}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(int(DefectInfo[intLine*nThings]),int(DefectInfo[intLine*nThings+1]),DefectInfo[intLine*nThings+2],DefectInfo[intLine*nThings+3],DefectInfo[intLine*nThings+4],DefectInfo[intLine*nThings+5],int(DefectInfo[intLine*nThings+6]))
+    print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[intLine*nThings],int(DefectInfo[intLine*nThings+1]),DefectInfo[intLine*nThings+2],DefectInfo[intLine*nThings+3],DefectInfo[intLine*nThings+4],DefectInfo[intLine*nThings+5],int(DefectInfo[intLine*nThings+6]))
   if len(DefectInfo) == 0:
     print(" NO FLAWS WERE FOUND ")
+#------------------------------------------------------------------------------
+def HnCComp(filehot,filecold,outdir,fitdir,Canvas,bolVerb):
+  """
+  Takes two sets of data, both should be of the same stave in the same orientation,
+  while one should be at a high temperature and the other at a low temperature. It
+  will then combine the results from each
+  """
+  DefHot  = GetDefects(filehot,outdir,fitdir,Canvas,bolVerb)
+  DefCold = GetDefects(filecold,outdir,fitdir,Canvas,bolVerb)
+
+
+  Nthings = 7
+  NHotDefects = len(DefHot)/Nthings
+  NColdDefects = len(DefCold)/Nthings
+
+  DefHot = DefHot.reshape(NHotDefects,Nthings)
+  DefCold =DefCold.reshape(NColdDefects,Nthings)
+
+  TDefs = []
+  BDefs = []
+  for i in range(NHotDefects):
+    if DefHot[i][1]== 0:
+      TDefs = np.append(TDefs,[0,0,DefHot[i][2],DefHot[i][3],DefHot[i][4],DefHot[i][5],DefHot[i][6]]) 
+    else:
+      BDefs = np.append(BDefs,[0,1,DefHot[i][2],DefHot[i][3],DefHot[i][4],DefHot[i][5],DefHot[i][6]])
+  for i in range(NColdDefects):
+    if DefCold[i][1]==0:
+      TDefs = np.append(TDefs,[1,0,DefCold[i][2],DefCold[i][3],DefCold[i][4],DefCold[i][5],DefCold[i][6]])
+    else:
+      BDefs = np.append(BDefs,[1,1,DefCold[i][2],DefCold[i][3],DefCold[i][4],DefCold[i][5],DefCold[i][6]])
+
+  NTDefs = len(TDefs)/Nthings
+  NBDefs = len(BDefs)/Nthings
+
+  TDefs = TDefs.reshape(NTDefs,Nthings)
+  BDefs = BDefs.reshape(NBDefs,Nthings)
+
+  TDefs = TDefs[TDefs[:,2].argsort()]
+  BDefs = BDefs[BDefs[:,2].argsort()]
+
+  Range = 1
+  TDefsF = []
+  TDefsO = [0,0,0,0,0,0,0]
+  for i in range(NTDefs):
+    if TDefsO[2] == 0 and i != NTDefs-1:
+      pass
+    elif TDefs[i][2] > TDefsO[2]-Range and TDefs[i][2] < TDefsO[2] + Range:
+      TDefsF = np.append(TDefsF,[0.5*(TDefsO[0]+TDefs[i][0]),0,0.5*(TDefsO[2]+TDefs[i][2]),0.5*(TDefsO[3]+TDefs[i][3]),0.5*(TDefsO[4]+TDefs[i][4]),0.5*(TDefsO[5]+TDefs[i][5]),0.5*(TDefsO[6]+TDefs[i][6])])
+      TDefsO[2] =0
+      continue
+    elif i == NTDefs-1:
+      if TDefsO[2] != 0:
+        TDefsF = np.append(TDefsF,TDefsO)
+      TDefsF = np.append(TDefsF,TDefs[i])
+    else:
+      TDefsF = np.append(TDefsF,TDefsO)
+    TDefsO = TDefs[i]
+  BDefsF = []
+  BDefsO = [0,0,0,0,0,0,0]
+  for i in range(NBDefs):
+    if BDefsO[2] == 0 and i != NBDefs-1:
+      pass
+    elif BDefs[i][2] > BDefsO[2]-Range and BDefs[i][2] < BDefsO[2] + Range:
+      BDefsF = np.append(BDefsF,[0.5*(BDefsO[0]+BDefs[i][0]),1,0.5*(BDefsO[2]+BDefs[i][2]),0.5*(BDefsO[3]+BDefs[i][3]),0.5*(BDefsO[4]+BDefs[i][4]),0.5*(BDefsO[5]+BDefs[i][5]),0.5*(BDefsO[6]+BDefs[i][6])])
+      BDefsO[2] =0
+      continue
+    elif i == NBDefs-1:
+      if BDefsO[2] != 0:
+        BDefsF = np.append(BDefsF,BDefsO)
+      BDefsF = np.append(BDefsF,BDefs[i])
+    else:
+      BDefsF = np.append(BDefsF,BDefsO)
+    BDefsO = BDefs[i]
+
+  NTDefsF = len(TDefsF)/Nthings
+  NBDefsF = len(BDefsF)/Nthings
+ 
+  DefsF = np.append(TDefsF,BDefsF)
+  print("COMBINED DEFECTS FOUND")
+  PrintDefectInfo(DefsF)
+  
+  GetDefects2(filehot,filecold,outdir,fitdir,Canvas,bolVerb)
 #------------------------------------------------------------------------------
 def DefectAnalysis(Defects,outdir,Canvas):
   """
@@ -449,6 +584,67 @@ def DefectAnalysis(Defects,outdir,Canvas):
   Canvas.Print(outdir+"WidthVHeightGraph.png")
   Canvas.Print(outdir+"WidthVHeightGraph.root")
 
+
+#------------------------------------------------------------------------------
+def TextCommands(inputfile,outdir,fitdir,bolVerb):
+  """
+  This allows the user to give commands to replot items and keep the program and
+  to edit what is plotted
+  """
+  print("\n-----Stave Defect Finder-----")
+  print("h = print list of commands")
+  print("q = quit program")
+  print("f = shows all attached files")
+  print("Defs = prints all defects from every file")
+  print("Def(i) = prints ith inputfile")
+  print("HnC(i,j) = prints hot and cold comparison between ith and jth inputfiles")
+
+  global bolQuit
+  while bolQuit == False:
+    Vin = raw_input("\nType the command you wish to do:\n")
+    if Vin == 'q':
+      bolQuit = True
+    elif Vin == 'f':
+      print(inputfile)
+    elif Vin == 'Defs':
+      Cnew = ROOT.TCanvas("cnew","cnew",0,0,2000,600)
+      Defs = []
+      for i in inputfile:
+        Defs = np.append(Defs,GetDefects(i,outdir,fitdir,Cnew,bolVerb))
+        if bolVerb == True:
+          DefectAnalysis(Def,outdir,Cnew)
+
+    elif Vin == 'h':
+      print("h = print list of commands")
+      print("q = quit program")
+      print("f = shows all attached files")
+      print("Defs = prints all defects from every file")
+      print("Def(i) = prints ith inputfile")
+      print("HnC(i,j) = prints hot and cold comparison between ith and jth inputfiles")
+
+
+    elif 'Def(' in Vin:
+      Vin = Vin.lstrip('Def(')
+      Vin = Vin.rstrip(')')
+      try:
+        Vin = int(Vin)
+        Cnew1 = ROOT.TCanvas("cnew1","cnew1",0,0,2000,600)
+        Def = GetDefects(inputfile[Vin],outdir,fitdir,Cnew1,bolVerb)
+      except:
+        print("NOT Correct format") 
+    elif 'HnC(' in Vin:
+      Vin = Vin.lstrip('HnC(')
+      Vin = Vin.rstrip(')')
+      Vin = Vin.split(',')
+      try:
+        Cnew2 = ROOT.TCanvas("cnew2","cnew2",0,0,2000,600)
+        HnCComp(inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,fitdir,Cnew2,bolVerb)
+      except:
+        print("NOT Correct format")
+    else:
+      print("Command not recognized")
+
+
 #------------------------------------------------------------------------------
 def main():
   """
@@ -460,16 +656,19 @@ def main():
 
   #Load the Files
   nargv = len(sys.argv)
+  inputfile = []
   if (nargv <= 1):
-    print("ERROR: Please provide an input root file. These files should be result.root from frameanal.py")
+    print("ERROR: Please provide an input root file or set of files. These files should be result.root from frameanal.py")
     return
   elif (nargv >= 3) and (sys.argv[1] == '-v' or sys.argv[1] == '--verbose'):
     print("VERBOSE: Creating a plot for each defect fit")
     bolVerb = 1    
-    inputfile = sys.argv[2]
+    for i in range(2,nargv):
+      inputfile = np.append(inputfile,sys.argv[i])
   else:
+    for i in range(1,nargv):
+      inputfile = np.append(inputfile,sys.argv[i])
     bolVerb = 0
-    inputfile = sys.argv[1]
 
   #MAKING THE OUTDIRECTORY
   outdir = "flawplots/"
@@ -481,31 +680,19 @@ def main():
 
   C1 = ROOT.TCanvas("c1","c1",0,0,2000,600)
 
-  Def = GetDefects(inputfile,outdir,fitdir,C1,bolVerb)
+  if len(inputfile) != 2:
+    Def = GetDefects(inputfile[0],outdir,fitdir,C1,bolVerb)
+    if bolVerb > 0:
+      DefectAnalysis(Def,outdir,C1)
 
-  if bolVerb > 0:
-    DefectAnalysis(Def,outdir,C1)
+  else:
+    Def = HnCComp(inputfile[0],inputfile[1],outdir,fitdir,C1,bolVerb)   
 
-  """
-  #-------------------------------
-  #These Lines can be used as a module that looks at many results
-  #FINDING DEFECTS
-  print("Stave2RJ----687--------")
-  Def = GetDefects("plot-000687-2RJ-p50/result.root",outdir,fitdir,C1,bolVerb)
-  print("Stave2RL----686--------")
-  Def = np.append(Def,  GetDefects("plot-000686-2RL-p50/result.root",outdir,fitdir,C1,bolVerb))
-  print("Stave5J----018---------")
-  Def = np.append(Def,  GetDefects("plot-000018-5J-p50/result.root",outdir,fitdir,C1,bolVerb))
-  print("Stave5L----019---------")
-  Def = np.append(Def,  GetDefects("plot-000019-5L-p50/result.root",outdir,fitdir,C1,bolVerb))
-  print("Stave2J----701---------")
-  Def = np.append(Def,  GetDefects("plot-000701-2J-p50/result.root",outdir,fitdir,C1,bolVerb))
-  print("Stave2L----703---------")
-  Def = np.append(Def,  GetDefects("plot-000703-2L-p50/result.root",outdir,fitdir,C1,bolVerb)) 
-  
-  DefectAnalysis(Def,outdir,C1)
-  #-------------------------------
-  """
+  global bolQuit 
+  bolQuit = False
+  while bolQuit == False:
+    TextCommands(inputfile,outdir,fitdir,bolVerb)
+
 
 if __name__ == "__main__":
   main()
