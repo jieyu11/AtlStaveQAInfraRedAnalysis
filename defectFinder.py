@@ -113,8 +113,7 @@ def FindPeaks(files,outdir,fitdir,canvas,intPipeNum,bolVerb = 0, strType = "temp
   objSpectrum = ROOT.TSpectrum(2*npeaks)
   HistClone =  Hist.Clone()
 
-  filename = files.split('/')
-  filename = filename[-2]
+  filename = MakeFileName(files)
  
   bolTempIsHot = TempIsHot(Hist)
   if bolTempIsHot == True:
@@ -387,10 +386,8 @@ def GetDefects2(inputfile1,inputfile2,outdir,fitdir,C1,bolVerb = 0):
   #for i in range(len(Boxes)-DefectsTop):
   #  Boxes[i+DefectsTop].Draw()
 
-  filename1 = inputfile1.split('/')
-  filename1 = filename1[1]
-  filename2 = inputfile2.split('/')
-  filename2 = filename2[1]
+  filename1 = MakeFileName(inputfile1)  
+  filename2 = MakeFileName(inputfile2)
 
   C1.Print(outdir+filename1+filename2+"-AllFlaws.png")
   C1.Print(outdir+filename1+filename2+"-AllFlaws.root")
@@ -398,6 +395,22 @@ def GetDefects2(inputfile1,inputfile2,outdir,fitdir,C1,bolVerb = 0):
   return 
 
 
+#------------------------------------------------------------------------------
+def MakeFileName(inputfile):
+  """
+  Takes the input file and makes a name for it
+  """
+  filename = inputfile.split('/')
+  try: 
+    filename = filename[-2]
+    if '.root' in filename:
+      raise Exception(".root in output filename")
+  except:
+    #If it cannot use a file structure it creates a date for the name
+    import datetime
+    filename = datetime.datetime.now().strftime("%I-%M-%S")
+  return filename
+  
 #------------------------------------------------------------------------------
 def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   """
@@ -419,8 +432,7 @@ def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   for i in range(len(Boxes)-DefectsTop):
     Boxes[i+DefectsTop].Draw()
 
-  filename = inputfile.split('/')
-  filename = filename[-2]
+  filename =MakeFileName(inputfile)
 
   C1.Print(outdir+filename+"-AllFlaws.png")
   C1.Print(outdir+filename+"-AllFlaws.root")
@@ -466,7 +478,8 @@ def HnCComp(filehot,filecold,outdir,fitdir,Canvas,bolVerb):
 
   DefHot = DefHot.reshape(NHotDefects,Nthings)
   DefCold =DefCold.reshape(NColdDefects,Nthings)
-
+  
+  #Convert defects from each image to each pipe (top or bottom)
   TDefs = []
   BDefs = []
   for i in range(NHotDefects):
@@ -486,12 +499,15 @@ def HnCComp(filehot,filecold,outdir,fitdir,Canvas,bolVerb):
   TDefs = TDefs.reshape(NTDefs,Nthings)
   BDefs = BDefs.reshape(NBDefs,Nthings)
 
+  #Sorts the Defects by their position on the x axis
   TDefs = TDefs[TDefs[:,2].argsort()]
   BDefs = BDefs[BDefs[:,2].argsort()]
 
   Range = 1
   TDefsF = []
   TDefsO = [0,0,0,0,0,0,0]
+  
+  #Combines double counted defects to their average
   for i in range(NTDefs):
     if TDefsO[2] == 0 and i != NTDefs-1:
       pass
@@ -526,6 +542,7 @@ def HnCComp(filehot,filecold,outdir,fitdir,Canvas,bolVerb):
   NTDefsF = len(TDefsF)/Nthings
   NBDefsF = len(BDefsF)/Nthings
  
+  #Recombines all defects and their information together
   DefsF = np.append(TDefsF,BDefsF)
   print("COMBINED DEFECTS FOUND")
   PrintDefectInfo(DefsF)
