@@ -6,10 +6,11 @@
 * Run:
   - Check installation below first!
 
-  - ./read_sequence.sh FlirIR_rec_example.seq
+  - ./read_sequence.sh FlirIR_rec_example.seq  [-e (OR -Emissivity) 0.85 (OR any value [0, 1]) ]
     + convert .seq to .root 
     + each image is stored in one root file roo/frame_idx.root, idx = [0, ...]
     + an average image is stored in file roo/frame_average.root
+    + use optional -e OR -Emissivity to change the emissivity value for the output.
 
   - ./frameanal.py roo/frame_average.root
     + for help, use: "./frameanal.py -h (OR --help)"

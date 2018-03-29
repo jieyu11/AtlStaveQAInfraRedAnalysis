@@ -12,6 +12,13 @@ if [[ "$2" != "" ]]; then
 fi
 echo write text file to folder: $txtoutfold
 
+setEmissivity=
+if [[ "$3" != "" ]]; then 
+  setEmissivity=$3
+  echo use pre-set emissivity: $setEmissivity
+fi
+
+
 
 #
 # This code convert raw data from .fff (produced by seqtobinary.pl) to 
@@ -36,7 +43,11 @@ for ffile in `ls -t $binaryfold/`; do
     B=$(echo "$Flir" | grep "Planck B" | cut -d: -f2)
     O=$(echo "$Flir" | grep "Planck O" | cut -d: -f2)
     F=$(echo "$Flir" | grep "Planck F" | cut -d: -f2)
-    Emissivity=$(echo "$Flir" | grep "Emissivity" | cut -d: -f2)
+    if [[ "$setEmissivity" != "" ]]; then
+      Emissivity=$setEmissivity
+    else
+      Emissivity=$(echo "$Flir" | grep "Emissivity" | cut -d: -f2)
+    fi
     ReflTemp=$(echo "$Flir" | grep "Reflected Apparent Temperature" | sed 's/[^0-9.-]*//g')
 
     echo R1 $R1 >  config

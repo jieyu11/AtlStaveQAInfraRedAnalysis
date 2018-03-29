@@ -3,17 +3,14 @@
 if [[ "$1" =~ ".seq" ]]; then 
   echo ------ doing: $0 $1
 else
-  echo do: $0 _FILE_NAME_.seq
+  echo do: $0 _FILE_NAME_.seq -e \(OR -Emissivity\) 0.95
   break
 fi
 
-#Emissivity=0.95
-#while read cfg_name cfg_val; do
-#  
-#
-#done < config
-
-
+setEmissivity=
+if [[ "$2" = "-e" || "$2" = "-Emissivity"  ]] && [[ "$3" != "" ]]; then 
+  setEmissivity=$3
+fi
 
 
 binarydir=fout
@@ -33,7 +30,7 @@ txtoutdir=tout
 rm -rf $txtoutdir
 mkdir -p $txtoutdir
 echo '------ converting binary to text ----- '
-./share/binarytotext.sh $binarydir $txtoutdir
+./share/binarytotext.sh $binarydir $txtoutdir $setEmissivity
 echo ''
 
 nfile=`ls -l $binarydir/*_*.* | wc -l`
