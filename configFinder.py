@@ -30,8 +30,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   Tree.SetBranchAddress("temperature",_temperature)
 
   #Load the image from TTree
-  image = np.full((xPixels,yPixels),-999) #A tree full of -999 used as a placeholder
-
+  image = np.full((xPixels,yPixels),-999.) #A tree full of -999 used as a placeholder
 
   bolAvgFrame = False
   if "frame_average.root" in strImageFile:
