@@ -77,6 +77,7 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   histcanny.Draw("colz")
   c2.Update()
 
+
   # Find the Four Corners of the Pipe Area
 
   c2.lines = []  #The lines stored in the canvas to show the buildup
@@ -92,12 +93,17 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
     #Find Long Horiz Lines
     findLongLines = cv2.HoughLinesP(image2,rho = 1,theta = 1*np.pi/1000,threshold = 100,minLineLength = 200,maxLineGap = 175)
 
-    LengthHoriz = np.size(findLongLines)/4
+    findLongLines = findLongLines.flatten()
+    nlines = len(findLongLines)/4
+    findLongLines = np.split(findLongLines,nlines)
+
+    LengthHoriz = nlines
     for line in range(int(LengthHoriz)):
-      x1 = findLongLines[line,0][1]
-      y1 = findLongLines[line,0][0]
-      x2 = findLongLines[line,0][3]
-      y2 = findLongLines[line,0][2]
+      x1 = findLongLines[line][1]
+      y1 = findLongLines[line][0]
+      x2 = findLongLines[line][3]
+      y2 = findLongLines[line][2]
+
       slope = abs((y2-y1)/(x2-x1+0.0001))
       intercept =y1-x1*(slope)
 
@@ -130,12 +136,16 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
   try:
     findShortLines = cv2.HoughLinesP(image2,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = 10, maxLineGap = 5)
 
-    LengthVert = np.size(findShortLines)/4
+    findShortLines = findShortLines.flatten()
+    nlines = len(findShortLines)/4
+    findShortLines = np.split(findShortLines,nlines)
+
+    LengthVert = nlines
     for line in range(int(LengthVert)):
-      x1 = findShortLines[line,0][1]
-      y1 = findShortLines[line,0][0]
-      x2 = findShortLines[line,0][3]
-      y2 = findShortLines[line,0][2]
+      x1 = findShortLines[line][1]
+      y1 = findShortLines[line][0]
+      x2 = findShortLines[line][3]
+      y2 = findShortLines[line][2]
       slope = abs((y2-y1)/(x2-x1+0.0001))
       intercept = y1-x1*(slope)
 
