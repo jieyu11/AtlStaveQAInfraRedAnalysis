@@ -132,6 +132,12 @@ class FrameAnalysis:
     if not os.path.isfile( cfg_name ):
       print ("ERROR:<FRAMEANALYSIS::__INIT__> config file " + cfg_name + " not found.")
       raise Exception(" Config file error! ")
+
+    os.system('cp '+cfg_name+' '+fig_outdir+'/'+cfg_name)
+    frame_name = roo_name.split('/')[-1]
+    print(frame_name) 
+    os.system('cp '+roo_name+' '+fig_outdir+'/'+frame_name)
+
     _f_cfg = open( cfg_name, 'r')
     for line in _f_cfg:
       #
@@ -374,7 +380,7 @@ class FrameAnalysis:
         and the bottom 40% of the pixels for the bottom pipe curve.
     """
 
-    _roo_out = ROOT.TFile("result.root", "recreate")
+    _roo_out = ROOT.TFile("plot/result.root", "recreate")
     h1s = [ ROOT.TH1F("top_pipe_temperature",  ";X in cm; Temperature (#circC)",  self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
             ROOT.TH1F("top_pipe_mean",         ";X in cm; Pipe position Y in cm", self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
             ROOT.TH1F("top_pipe_width",        ";X in cm; Pipe width Y in cm",    self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),

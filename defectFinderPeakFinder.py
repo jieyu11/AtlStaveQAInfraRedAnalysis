@@ -13,13 +13,13 @@ from defectFinderToolBox import *
 #------------------------------------------------------------------------------
 #FindPeaks---------------------------------------------------------------------
 
-def FindPeaks(files,outdir,fitdir,canvas,Boxes,intPipeNum,bolVerb = 0, strType = "temperature;1"):
+def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0): 
   """
-  Uses the information along the cooling pipe to find the flaws along the pipe.
+  Uses the information along the cooling pipe histogram to find the flaws along the pipe.
   It has three main parts.
 
   1. Histogram conversion:
-    - Loads Histogram from file.
+    - Uses input histogram
     - If necessary, flips it so that there are peaks
     - Band passes the spectrum to remove high and low fluctuations
     - Uses TSpectrum.Search to find peaks
@@ -41,23 +41,19 @@ def FindPeaks(files,outdir,fitdir,canvas,Boxes,intPipeNum,bolVerb = 0, strType =
         @ Peak Width must be > 1cm and < 8cm
         @ Peak Height must be > 0.2 C
   3. Plotting and output:
-    Each peak that passes the cut is then saved as a defect and plotted as a
-    box on the input spectrum. The flaw information is then returned by the
-    function.
+    Each peak that passes the cut is then saved as a defect. The flaw information
+    is then returned by the function.
   """
-  strPipeLab = "top_"
-  if intPipeNum == 1:
-    strPipeLab = "bot_"
-  Hist=GetHistogram(files,intPipeNum,strType)
+  
   Info = GetHistInfo(Hist)
   nBins = Info[0] 
   Xmin = Info[1] 
   Xmax =  Info[2] 
+  filename = Info[3]
+
   npeaks = 20
   objSpectrum = ROOT.TSpectrum(2*npeaks)
   HistClone =  Hist.Clone()
-
-  filename = MakeFileName(files)
  
   bolTempIsHot = TempIsHot(Hist)
   if bolTempIsHot == True:
@@ -80,7 +76,7 @@ def FindPeaks(files,outdir,fitdir,canvas,Boxes,intPipeNum,bolVerb = 0, strType =
   HistClone.Draw()
   HistBackground.Draw("same")
   if bolVerb > 0:
-    canvas.Print(fitdir+filename+strPipeLab+"BackgroundInvertPlot.png")
+    canvas.Print(fitdir+filename+"BackgroundInvertPlot.png")
  
   PeakPosArray = np.zeros(nfound) 
   for i in range(nfound):
@@ -128,7 +124,7 @@ def FindPeaks(files,outdir,fitdir,canvas,Boxes,intPipeNum,bolVerb = 0, strType =
       FitGoodness = Fit2Goodness
       FitLevel = 1
       if bolVerb > 0:
-        canvas.Print(fitdir+filename+strPipeLab+str(i)+"_FitResults.png")
+        canvas.Print(fitdir+filename+str(i)+"_FitResults.png")
 
     #Find Flaws Method 3----------
     fit3 = ROOT.TF1("pgaus3","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]+[4]*x",Xmin,Xmax)
@@ -154,7 +150,7 @@ def FindPeaks(files,outdir,fitdir,canvas,Boxes,intPipeNum,bolVerb = 0, strType =
       FitGoodness = Fit3Goodness
       FitLevel = 2
       if bolVerb > 0:
-        canvas.Print(fitdir+filename+strPipeLab+str(i)+"_FitResults.png")
+        canvas.Print(fitdir+filename+str(i)+"_FitResults.png")
 
     #Height Finding
     fit4 = ROOT.TF1("pgaus4","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]+[4]*x",Xmin,Xmax)
@@ -223,37 +219,19 @@ def FindPeaks(files,outdir,fitdir,canvas,Boxes,intPipeNum,bolVerb = 0, strType =
   Hist.SetMaximum(YMax+YSep*PPer)
   Hist.SetMinimum(YMin -YSep*PPer)  
   nMflaws = len(MFlaws)/5
-  
-  BoxesL = len(Boxes)
- 
-  Ymax = Hist.GetMaximum()
-  Ymin = Hist.GetMinimum()
-
-  #Major Flaw Boxes
-  for i in range(nMflaws):
-    Center = MFlaws[i*5+1]
-    Xmin = Center - SizeConstant/2*MFlaws[i*5+2]
-    Xmax = Center + SizeConstant/2*MFlaws[i*5+2] 
-    Boxes = np.append(Boxes,ROOT.TBox(Xmin,Ymin,Xmax,Ymax))
-    Boxes[i+BoxesL].SetLineColor(i+2)
-    Boxes[i+BoxesL].SetLineWidth(1)
-    FitGoodness = MFlaws[i*5+4]
-    trans = 0.5
-    if FitGoodness < 0.005:
-      Boxes[i+BoxesL].SetFillColorAlpha(2,trans)
-    elif FitGoodness < 0.01:
-      Boxes[i+BoxesL].SetFillColorAlpha(5,trans)
-    elif FitGoodness < 0.03:
-      Boxes[i+BoxesL].SetFillColorAlpha(3,trans)
-    else:
-      Boxes[i+BoxesL].SetFillColorAlpha(4,trans)
-    Boxes[i+BoxesL].Draw()
 
   if bolVerb > 0: 
-    canvas.Print(outdir+filename+strPipeLab+"Tpeaks.root")
-    canvas.Print(outdir+filename+strPipeLab+"Tpeaks.png")
+    canvas.Print(outdir+filename+"Tpeaks.root")
+    canvas.Print(outdir+filename+"Tpeaks.png")
 
   #PREPPINGDEFECTINFO-----------------------------------------------------
+  if 'top' in filename:
+    intPipeNum = 0
+  elif 'bot' in filename:
+    intPipeNum = 1
+  else:
+    intPipeNum = -1
+
   DefectInfo = []
   for i in range(nMflaws):
     DefectInfo = np.append(DefectInfo,i)                                  #Flaw Number
@@ -264,40 +242,94 @@ def FindPeaks(files,outdir,fitdir,canvas,Boxes,intPipeNum,bolVerb = 0, strType =
     DefectInfo = np.append(DefectInfo,float(MFlaws[i*5+4]))               #Fit Goodness
     DefectInfo = np.append(DefectInfo,MFlaws[i*5])                        #Fit Level 
   return DefectInfo
+#------------------------------------------------------------------------------
+def GetDefectBoxes(DefectInfo,Ymin,Ymax):
+  """
+  Creates a list of TBox objects for each defect
+  """
+ 
+  #Ymax = Hist.GetMaximum()
+  #Ymin = Hist.GetMinimum()
+  Boxes = []
+  #Major Flaw Boxes
+  for i in range(len(DefectInfo)/7):
+    Center = DefectInfo[i*7+2]
+    Xmin = Center - 0.5*DefectInfo[i*7+3]
+    Xmax = Center + 0.5*DefectInfo[i*7+3] 
+    Boxes = np.append(Boxes,ROOT.TBox(Xmin,Ymin,Xmax,Ymax))
+    FitGoodness = DefectInfo[i*7+4]
+    trans = 0.5
+    if FitGoodness < 0.005:
+      Boxes[i].SetFillColorAlpha(2,trans)
+    elif FitGoodness < 0.01:
+      Boxes[i].SetFillColorAlpha(5,trans)
+    elif FitGoodness < 0.03:
+      Boxes[i].SetFillColorAlpha(3,trans)
+    else:
+      Boxes[i].SetFillColorAlpha(4,trans)
+ 
+  return Boxes
 
 #------------------------------------------------------------------------------
 def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   """
-  This takes an input file and gets all of the defects and prints all of the 
-  relevant information. This is necessary for printing the boxes on a single canvas
+  This takes an input file and gets all of the defects and prints all of them on 
+  a single plot that is broken into the top(EOS) and bottom pipes thermal profile.
+  It then returns the Defect Info 
   """
-  DefectInfo = []
+  #Find the Defects
+  HistTop = GetHistogram(inputfile,0)
+  DefectInfoTop = FindPeaks(HistTop,outdir,fitdir,C1,bolVerb)
+  HistBot = GetHistogram(inputfile,1)
+  DefectInfoBot = FindPeaks(HistBot,outdir,fitdir,C1,bolVerb)
   C1.Clear()
+  C1.Update()
+
+  Ymax = max(HistTop.GetMaximum(),HistBot.GetMaximum())
+  Ymin = min(HistTop.GetMinimum(),HistBot.GetMinimum())
+
+  bolTempHot = TempIsHot(HistTop)
+  if bolTempHot == True:
+    Scale = 5
+  elif bolTempHot == False:
+    Scale = 10
+  else:
+    Scale = 15
+
+  YCent = (Ymax+Ymin)/2
+  Ymax = YCent + Scale/2
+  Ymin = YCent - Scale/2 
+
+  #Plot the Histograms and Defects
   C1.Divide(1,2)
   C1.SetGrid()
   C1.cd(1)
 
-  Boxes = []
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile,outdir,fitdir,C1,Boxes,0,bolVerb)) 
-  DefectsTop = len(Boxes)
-  for i in range(DefectsTop):
-    Boxes[i].Draw()
+  HistTop.Draw()
+  HistTop.SetAxisRange(Ymin,Ymax,"Y")
+  BoxesTop = GetDefectBoxes(DefectInfoTop,Ymin,Ymax)
+  for Box in BoxesTop:
+    Box.Draw() 
+  #HistTop.SetDirectory(0)
+  C1.cd(2)
+  HistBot.Draw()
+  HistBot.SetAxisRange(Ymin,Ymax,"Y")
+  BoxesBot = GetDefectBoxes(DefectInfoBot,Ymin,Ymax)
+  for Box in BoxesBot:
+    Box.Draw()
+  #HistBot.SetDirectory(0)
+  C1.Update()
+  DefectInfo = np.append(DefectInfoTop,DefectInfoBot)
 
-  C1.cd(2) 
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile,outdir,fitdir,C1,Boxes,1,bolVerb))
-  try:
-    for i in range(len(Boxes)-DefectsTop):
-      Boxes[i+DefectsTop].Draw()
-  except:
-    print("SOMETHING WENT WRONG")
-
-  filename =MakeFileName(inputfile)
-
+  #Save the output as a png and root file
+  filename = MakeFileName(inputfile)
   C1.Print(outdir+filename+"-AllFlaws.png")
   C1.Print(outdir+filename+"-AllFlaws.root")
-  PrintDefectInfo(DefectInfo,-1)
-  return DefectInfo
 
+  #Output the defect information
+  PrintDefectInfo(DefectInfo,-1)
+  
+  return DefectInfo
 #------------------------------------------------------------------------------
 #Hot and Cold Defect Comparison------------------------------------------------
 def HnCComp(filehot,filecold,outdir,fitdir,Canvas,bolVerb):
@@ -308,7 +340,6 @@ def HnCComp(filehot,filecold,outdir,fitdir,Canvas,bolVerb):
   """
   DefHot  = GetDefects(filehot,outdir,fitdir,Canvas,bolVerb)
   DefCold = GetDefects(filecold,outdir,fitdir,Canvas,bolVerb)
-
 
   Nthings = 7
   NHotDefects = len(DefHot)/Nthings
@@ -395,35 +426,112 @@ def HnCComp(filehot,filecold,outdir,fitdir,Canvas,bolVerb):
   DefsF = np.append(TDefsF,BDefsF)
   print("COMBINED DEFECTS FOUND")
   PrintDefectInfo(DefsF)
-  GetDefects2(filehot,filecold,outdir,fitdir,Canvas,bolVerb)
+  PlotDefectsHnC(filehot,filecold,TDefsF,BDefsF,outdir,fitdir,Canvas,bolVerb)
 
 #------------------------------------------------------------------------------
-def GetDefects2(inputfile1,inputfile2,outdir,fitdir,C1,bolVerb = 0):
+def PlotDefectsHnC(inputfile1,inputfile2,TDefects,BDefects,outdir,fitdir,C1,bolVerb = 0):
   """
-  This takes tow input files and gets all of the defects and prints all of the 
+  This takes two input files and gets all of the defects and prints all of the 
   relevant information. This is necessary for printing the boxes on a single canvas
   """
-  DefectInfo = []
+  HistTop1 = GetHistogram(inputfile1,0)
+  HistBot1 = GetHistogram(inputfile1,1)
+  HistTop2 = GetHistogram(inputfile2,0)
+  HistBot2 = GetHistogram(inputfile2,1)
+
+  #Invert Cold spectra
+  bolTempHot1 = TempIsHot(HistTop1)
+  bolTempHot2 = TempIsHot(HistTop2)
+
+  if bolTempHot1 == False:
+    HistTop1 = InvertHistogram(HistTop1)
+    HistBot1 = InvertHistogram(HistBot1)
+  if bolTempHot2 == False:
+    HistTop2 = InvertHistogram(HistTop2)
+    HistBot2 = InvertHistogram(HistBot2)
+
+  #Create Pads!
   C1.Clear()
-  C1.SetGrid()
-  C1.Divide(1,4)
-  C1.cd(1)
+  ROOT.gStyle.SetOptStat(0)
+  ROOT.gStyle.SetOptTitle(0)
 
-  Boxes = []
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile1,outdir,fitdir,C1,Boxes,0,bolVerb))
-  C1.cd(2) 
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile2,outdir,fitdir,C1,Boxes,0,bolVerb)) 
-  C1.cd(3)
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile1,outdir,fitdir,C1,Boxes,1,bolVerb))  
-  C1.cd(4)
-  DefectInfo = np.append(DefectInfo,FindPeaks(inputfile2,outdir,fitdir,C1,Boxes,1,bolVerb))
+  PadT = ROOT.TPad("toppad","EOSPipe",0.0,0.5,1.0,1.0)
+  PadB = ROOT.TPad("botpad","OutPipe",0.0,0.0,1.0,0.5)
+  PadT.Draw()
+  PadT.SetGrid()
+  PadB.Draw()
+  PadB.SetGrid()
 
+  #Plotting Ranges
+  Max = max(HistTop1.GetMaximum(),HistTop2.GetMaximum(),HistBot1.GetMaximum(),HistBot2.GetMaximum())
+  Min = min(HistTop1.GetMinimum(),HistTop2.GetMinimum(),HistBot1.GetMinimum(),HistBot2.GetMinimum())
+  YSep = Max-Min
+
+  LS =0.15
+  TitleS =0.15
+  TitleO =0.5
+  OffsetP = 0.5
+
+  #Top Pad
+  PadT.cd()
+  HistTop1.Draw("LC CM")
+  HistTop2.Draw("SAME LC CM")
+  HistTop1.SetAxisRange(Min-0.1*YSep,Max+OffsetP*YSep,"Y")
+  HistTop2.SetAxisRange(Min-0.1*YSep,Max+OffsetP*YSep,"Y")
+  HistTop1.GetYaxis().SetLabelSize(LS*.3)
+  HistTop1.GetYaxis().SetTitleSize(LS*.3)
+  HistTop1.GetYaxis().SetTitleOffset(TitleO)
+  HistTop1.GetYaxis().SetTitle("Temperature [#circC]")
+  HistTop1.GetXaxis().SetLabelSize(LS*.3)
+  HistTop1.GetXaxis().SetTitleSize(LS*.3)
+  HistTop1.GetXaxis().SetTitleOffset(TitleO*1.5)
+  HistTop1.GetXaxis().SetTitle("Stave Length [cm]")
+
+  TLegend = ROOT.TLegend(0.1,0.7,0.3,0.9)
+  TLegend.SetHeader("End of Stave Pipe Comparison","C")
+  TLegend.AddEntry(HistTop1,HistTop1.GetName(),"L")
+  TLegend.AddEntry(HistTop2,HistTop2.GetName(),"L")
+  TLegend.Draw()
+
+  TDefBoxes = GetDefectBoxes(TDefects,Min,Max)
+  for Box in TDefBoxes:
+    Box.Draw()
+
+  #Bottom Pad
+  PadB.cd()
+  HistBot1.Draw("LC CM")
+  HistBot2.Draw("SAME LC CM")
+  HistBot1.SetAxisRange(Min-0.1*YSep,Max+OffsetP*YSep,"Y")
+  HistBot2.SetAxisRange(Min-0.1*YSep,Max+OffsetP*YSep,"Y")
+  HistBot1.GetYaxis().SetLabelSize(LS*.3)
+  HistBot1.GetYaxis().SetTitleSize(LS*.3)
+  HistBot1.GetYaxis().SetTitleOffset(TitleO)
+  HistBot1.GetYaxis().SetTitle("Temperature [#circC]")
+  HistBot1.GetXaxis().SetLabelSize(LS*.3)
+  HistBot1.GetXaxis().SetTitleSize(LS*.3)
+  HistBot1.GetXaxis().SetTitleOffset(TitleO*1.5)
+  HistBot1.GetXaxis().SetTitle("Stave Length [cm]")
+
+  BLegend = ROOT.TLegend(0.1,0.7,0.3,0.9)
+  BLegend.SetHeader("Return Pipe Comparison","C")
+  BLegend.AddEntry(HistBot1,HistBot1.GetName(),"L")
+  BLegend.AddEntry(HistBot2,HistBot2.GetName(),"L")
+  BLegend.Draw()
+
+
+  BDefBoxes = GetDefectBoxes(BDefects,Min,Max)
+  for Box in BDefBoxes:
+    Box.Draw()
+  C1.Update()
+
+  #Save the plots
   filename1 = MakeFileName(inputfile1)  
   filename2 = MakeFileName(inputfile2)
 
   C1.Print(outdir+filename1+filename2+"-AllFlaws.png")
   C1.Print(outdir+filename1+filename2+"-AllFlaws.root")
 
+ 
 #------------------------------------------------------------------------------
 def PrintDefectInfo(DefectInfo,intLine=-1):
   """
@@ -495,5 +603,62 @@ def DefectAnalysis(Defects,outdir,Canvas):
   
   Canvas.Print(outdir+"WidthVHeightGraph.png")
   Canvas.Print(outdir+"WidthVHeightGraph.root")
+
+#------------------------------------------------------------------------------
+def GetOneLineDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
+  """
+  This takes an input file and gets all of the defects and prints all of them on 
+  a single plot that is broken into the top(EOS) and bottom pipes thermal profile.
+  It then returns the Defect Info 
+  """
+  #Find the Defects
+  bendlength = 10 #Not certain if this is what we want...
+  OneLineHist = OneLine(inputfile,outdir,C1,bendlength)
+  DefectInfo = FindPeaks(OneLineHist,outdir,fitdir,C1,bolVerb)
+  
+  C1.Clear()
+  C1.Update()
+
+  bolTempHot = TempIsHot(OneLineHist)
+    
+  AYMax = OneLineHist.GetMaximum()
+  AYMin = OneLineHist.GetMinimum()
+  if bolTempHot == True:
+    Scale = 5
+  elif bolTempHot == False:
+    Scale = 10
+  
+  YCent = (AYMax + AYMin)/2
+  YMax = YCent + Scale/2
+  YMin = YCent - Scale/2
+
+  #Plot the Histograms and Defects
+  C1.SetGrid()
+  C1.cd()
+
+  OneLineHist.Draw()
+
+  LS = 0.1
+  TitleO = 1
+  OneLineHist.SetAxisRange(YMin,YMax,"Y")
+  OneLineHist.GetYaxis().SetLabelSize(LS*0.3)
+  OneLineHist.GetYaxis().SetTitleSize(LS*.3)
+  OneLineHist.GetYaxis().SetTitleOffset(TitleO)
+  OneLineHist.GetXaxis().SetLabelSize(LS*0.3)
+  OneLineHist.GetXaxis().SetTitleSize(LS*.3)
+  OneLineHist.GetXaxis().SetTitleOffset(TitleO)
+
+
+  Boxes = GetDefectBoxes(DefectInfo,YMin,YMax)
+  for Box in Boxes:
+    Box.Draw() 
+  C1.Update()
+
+  #Save the output as a png and root file
+  filename = MakeFileName(inputfile)
+  C1.Print(outdir+filename+"-AllFlawsLine.png")
+  C1.Print(outdir+filename+"-AllFlawsLine.root")
+ 
+  return DefectInfo
 
 

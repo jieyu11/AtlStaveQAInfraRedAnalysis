@@ -19,6 +19,9 @@ def GetHistogram(inputfile,intPipeNum,strType = "temperature;1"):
 
   Hist = File.Get(side+strType)
   Hist.SetDirectory(0)
+  strOrigName = Hist.GetName()
+  strNamePrecurse = MakeFileName(inputfile)
+  Hist.SetName(strNamePrecurse+'_'+strOrigName)
   File.Close()
   return Hist
 
@@ -46,7 +49,19 @@ def ShiftHistogram(HistToShift,intPixelsToShift):
   for i in range(nbins):
     HistShifted.AddBinContent(i+1,HistToShift.GetBinContent(i+1))
   return HistShifted
-
+#------------------------------------------------------------------------------
+def InvertHistogram(HistToInvert):
+  """
+  Takes a histogram and inverts it around the y axis and returns the inverted hist
+  """
+  Info = GetHistInfo(HistToInvert)
+  nbins = int(Info[0])
+  Xmin = float(Info[1])
+  Xmax = float(Info[2])
+  HistInverted = ROOT.TH1F(Info[3]+"Inverted",Info[3]+"Inverted",nbins,Xmin,Xmax)
+  for i in range(nbins):
+    HistInverted.AddBinContent(i+1,HistToInvert.GetBinContent(i+1)*-1)
+  return HistInverted
 
 #------------------------------------------------------------------------------
 def CutHistogram(HistToCut,intSide,intPixelsToCut):
@@ -119,7 +134,7 @@ def TempIsHot(Hist):
     return False
   else:
     print("WARNING: Temperature values are too close to ambient for decent results")
-
+    return -999
 #------------------------------------------------------------------------------
 def BandPassFFT(Hist,CutOffL,CutOffH):
   """
@@ -325,18 +340,55 @@ def PlotDiffScale(offset,file1,file2,outdir,C1,C2,strType = "temperature;1"):
   PlotDiffLine(offset,file1,file2,outdir,C2,1,strType,True) 
 
 #-----------------------------------------------------------------------------
-#Find RMS---------------------------------------------------------------------
-def findRMS(inputfile,intPipeNum,outdir):
+def GetBothRMS(inputfile,outdir,canvas):
+  """
+  Creates a plot that has both histograms on it
+  """
+  canvas.Divide(2,1)
+  canvas.cd(1)
+  HistTop = GetHistogram(inputfile,0)
+  h1 = RMS(HistTop,outdir,canvas)
+  canvas.Update()
+  h1.Draw()
+  canvas.cd(2)
+  HistBot = GetHistogram(inputfile,1)
+  h2 = RMS(HistBot,outdir,canvas)
+  canvas.Update()
+  h2.Draw()
+
+  name = MakeFileName(inputfile)
+  canvas.Print(outdir+name+"RMSPlot.png")
+#Find RMS 2-------------------------------------------------------------------
+def OneLineRMS(inputfile,outdir,canvas,bendlength = 10):
+  """
+  Stuff will go here
+  """  
+  canvas.Clear()
+  #Create the line
+  LineHist = OneLine(inputfile,outdir,canvas,bendlength)
+  RMSHist = RMS(LineHist,outdir,canvas)
+  canvas.cd()
+
+  #Plot it
+  RMSHist.Draw()
+  canvas.Update()
+  
+  #Save it
+  name = MakeFileName(inputfile)
+  canvas.Print(outdir+name+"RMSPlotLine.png")
+
+
+def RMS(hist,outdir,canvas):
   """
   Takes in a histogram, fits it with a strait line, it then subtracts each data
   point with the line. This is then plotted on a separate histogram.
   """
   #Get histogram info
-  hist = GetHistogram(inputfile,intPipeNum)
   Info = GetHistInfo(hist)
   nbins = Info[0]
   Xmin = Info[1]
   Xmax = Info[2]
+  name = Info[3]
 
   ROOT.gStyle.SetOptStat(1)
   ROOT.gStyle.SetOptTitle(1)
@@ -347,12 +399,8 @@ def findRMS(inputfile,intPipeNum,outdir):
   offset =fit.GetParameter(0)
   slope =fit.GetParameter(1)
  
-  #Create rms histogram 
-  PipeName = "TopPipe"
-  if intPipeNum >0:
-    PipeName = "BotPipe"
-  name = MakeFileName(inputfile)
-  RMSHist = ROOT.TH1F(name+PipeName+"RMSHistogram",PipeName+" RMS Plot;Measured - Fit [#circC];Counts",50,-2,2)
+  #Create rms histogram  
+  RMSHist = ROOT.TH1F(name+"RMSHistogram"," RMS Plot;Measured - Fit [#circC];Counts",50,-2,2)
   Xincrement = (Xmax - Xmin)/nbins
   for i in range(nbins):
     Val = hist.GetBinContent(i+1)
@@ -379,6 +427,7 @@ def GetBothRMS(inputfile,outdir,canvas):
 
   name = MakeFileName(inputfile)
   canvas.Print(outdir+name+"RMSPlot.png")
+
 
 #-----------------------------------------------------------------------------
 #One Line---------------------------------------------------------------------
@@ -409,7 +458,7 @@ def OneLine(inputfile,outdir,canvas,bendLength = 1):
   REnd = hist1.GetBinContent(nbins1)
 
   AvgOffset = 0.5*(LEnd+REnd)
-  print(AvgOffset)
+  #print(AvgOffset)
 
   #Combining the two
   name = MakeFileName(inputfile)
@@ -429,15 +478,15 @@ def OneLine(inputfile,outdir,canvas,bendLength = 1):
     CombHist.SetBinContent(i+1,Val)
 
   #Create the plot
-  canvas.cd()
-  Pad0 = ROOT.TPad("grid","",0,0,1,1)
-  Pad0.Draw()
-  Pad0.cd()
-  Pad0.SetGrid()
-  CombHist.Draw()    
-  canvas.Update()
-  canvas.Print(outdir+name+"Line.root")
-  canvas.Print(outdir+name+"Line.png")
+  #canvas.cd()
+  #Pad0 = ROOT.TPad("grid","",0,0,1,1)
+  #Pad0.Draw()
+  #Pad0.cd()
+  #Pad0.SetGrid()
+  #CombHist.Draw()    
+  #canvas.Update()
+  #canvas.Print(outdir+name+"Line.root")
+  #canvas.Print(outdir+name+"Line.png")
 
   return CombHist
   
@@ -449,6 +498,7 @@ def OneLineComp(inputfile0,inputfile1,outdir,canvas,bendLength = 1,Scale = False
   resulting histograms
   """
   ROOT.gStyle.SetOptStat(0)
+  List = ROOT.TList()
   Hist0 = OneLine(inputfile0,outdir,canvas,bendLength)
   Hist1 = OneLine(inputfile1,outdir,canvas,bendLength)
   canvas.Clear()
@@ -488,7 +538,7 @@ def OneLineComp(inputfile0,inputfile1,outdir,canvas,bendLength = 1,Scale = False
 
   #Fit the difference between the two plots
   HistDiff = Hist1Shifted - Hist0Shifted
-  HistDiff.Fit(fit,"q")
+  HistDiff.Fit(fit,"q nodraw")
   offset = fit.GetParameter(0)
   
   yMax = max(Hist0Shifted.GetMaximum(),Hist1Shifted.GetMaximum())
@@ -523,9 +573,7 @@ def OneLineComp(inputfile0,inputfile1,outdir,canvas,bendLength = 1,Scale = False
   #Plot 1 Comparison
   Pad1.cd()
   Hist1Shifted.SetLineColor(1)
-  Hist0Shifted.Draw("LC CM")
-  Hist0Shifted.SetAxisRange(yMin-0.1*ySep,yMax+0.1*ySep,"Y")
-  Hist1Shifted.Draw("SAME LC CM")
+  Hist0Shifted.SetAxisRange(yMin-0.1*ySep,yMax+0.1*ySep,"Y")  
   Hist1Shifted.SetAxisRange(yMin-0.1*ySep,yMax+0.1*ySep,"Y") 
   Hist0Shifted.GetYaxis().SetLabelSize(LS*.3)
   Hist0Shifted.GetYaxis().SetTitleSize(TitleS*.3)
@@ -539,11 +587,17 @@ def OneLineComp(inputfile0,inputfile1,outdir,canvas,bendLength = 1,Scale = False
   Legend.SetHeader(Title,"C")
   Legend.AddEntry(Hist0Shifted,Hist0Title,"L")
   Legend.AddEntry(Hist1Shifted,Hist1Title,"L")
-  Legend.Draw() 
+
+  List.AddLast(Hist0Shifted)
+  List.AddLast(Hist1Shifted)
+  List.AddLast(Legend)
+  List.At(0).Draw("LC CM")
+  List.At(1).Draw("SAME LC CM")
+  List.At(2).Draw()
 
   #Plot 1 Delta
   Pad2.cd()
-  HistDiff.Draw()
+  HistDiff.SetDirectory(0) 
   HistDiff.GetYaxis().SetTitle("Temp Difference [C#circ]")
   HistDiff.GetYaxis().SetLabelSize(LS*.7)
   HistDiff.GetYaxis().SetTitleSize(LS*.7) 
@@ -551,17 +605,126 @@ def OneLineComp(inputfile0,inputfile1,outdir,canvas,bendLength = 1,Scale = False
   HistDiff.GetXaxis().Delete()
   HistDiff.SetNdivisions(10,"Y")
   HistDiff.GetXaxis().SetLabelOffset(10)
-  filename = Hist0Title+Hist1Title 
-  
+
+  List.AddLast(HistDiff)
+  List.At(3).Draw("LC CM")
+ 
   #PRINTING THE PLOTS    
-
+  filename = Hist0Title+Hist1Title 
   canvas.Print(outdir+filename+ScaleTitle+"_LineDif.png")  
-  canvas.Print(outdir+filename+ScaleTitle+"_LineDif.root")
+  canvas.Print(outdir+filename+ScaleTitle+"_LineDif.root") 
+#---------------------------------------------------------------------
+def FindTempHist(inputfile,outdir,canvas):
+  """
+  Plots all temperature measurements of the profile as a histogram
+  """
+ 
+  #Get histogram EOS info
+  histEOS = GetHistogram(inputfile,0)
+  InfoEOS = GetHistInfo(histEOS)
+  nbinsEOS = InfoEOS[0]
+  XminEOS = InfoEOS[1]
+  XmaxEOS = InfoEOS[2]
+  YmeanEOS = 0.5*(histEOS.GetMaximum()+histEOS.GetMinimum())
+
+  #Get histogram info
+  hist1 = GetHistogram(inputfile,1)
+  Info1 = GetHistInfo(hist1)
+  nbins1 = Info1[0]
+  Xmin1 = Info1[1]
+  Xmax1 = Info1[2]
+  Ymean1 = 0.5*(hist1.GetMaximum()+hist1.GetMinimum())
+
+  #Make new Histogram
+  Ymean = 0.5*(YmeanEOS+Ymean1)
+  Ysep = 10
+  Ymin = Ymean -0.5*Ysep
+  Ymax = Ymean +0.5*Ysep  
+
+  HistNet = ROOT.TH1F("HistogramSum","HistSum",100,Ymin,Ymax)
+  for i in range(nbinsEOS):
+    HistNet.Fill(histEOS.GetBinContent(i+1))
+    HistNet.Fill(histEOS.GetBinContent(i+1))
   
+  #Print out the mean, std dev, and plot
+  MeanVal = HistNet.GetMean()
+  MeanErr = HistNet.GetStdDev()
 
+  print("Name  : "+inputfile)
+  print("Mean  : "+str(MeanVal))
+  print("StdDev: "+str(MeanErr))
 
+  nametag = MakeFileName(inputfile)
+  ROOT.gStyle.SetOptStat(1)
+  canvas.cd()
+  canvas.Clear()
+  HistNet.Draw()
+  canvas.Print(outdir+nametag+'TempHist.png')
 
+  return [MeanVal,MeanErr]
 
+def FindAvgTemps(inputfiles,outdir,canvas):
+  """
+  Prints out a cvs file of the data as a function of a set time
+  """
+  outputFile = open('AvgTempData.csv','w')
+  StartLine = 'Name,Mean,StdDev\n'
+  outputFile.write(StartLine)
+  outputFile.close()
+  outputFile = open('AvgTempData.csv','a')
+  for fyle in inputfiles:
+    Data = FindTempHist(fyle,outdir,canvas)
+    strData = str(Data[0])+','+str(Data[1])
+    outline = fyle+','+strData+'\n'
+    outputFile.write(outline)
+  outputFile.close
+ 
+#---------------------------------------------------------------------
+def OneLineMulti(inputfiles,outdir,canvas,bendLength = 10):
+  """
+  Plots all attached input files on one plot
+  """
+  Hists = ROOT.TList()
+  YMax =-999
+  YMin = 999
+  canvas.Clear()
+  canvas.cd()
+  Legend = ROOT.TLegend(0.1,0.7,0.3,0.9)
+  Legend.SetHeader("Temperature Comparison","C")
+  Hists.AddLast(Legend)
+  name = ""
 
+  for i in range(len(inputfiles)):
+    HistN = OneLine(inputfiles[i],outdir,canvas,bendLength)
+    YMax = max(YMax,HistN.GetMaximum())
+    YMin = min(YMin,HistN.GetMinimum())
+    name += HistN.GetName()
+    HistN.SetAxisRange(YMin,YMax,"Y")
+    HistN.SetLineColor(i+1)
+    Hists.AddLast(HistN) 
+    Legend.AddEntry(HistN,HistN.GetName())
+  for i in range(1,len(inputfiles)+1):
+    Hists.At(i).Draw("Same LC CM")
+    Hists.At(i).SetAxisRange(YMin,YMax,"Y")
+  Legend.Draw()
+  canvas.Update()
+  canvas.Print(outdir+name+"CombinedTempProfile.png")
 
+  return
+  #Makes frames for a video!
+  canvas2 = ROOT.TCanvas("vidplot")
 
+  j=-4.48
+  for i in range(1,len(inputfiles)+1):
+    canvas2.Clear()
+    canvas2.cd()
+    TimeStamp = ROOT.TPaveText(0.7,0.8,.9,.9,"NDC")
+    j+=1
+
+    TimeStamp.AddText("Time = "+str(j)+" min")
+    Hists.At(i).SetLineColor(1)
+    Hists.At(i).Draw("LC CM")
+    Hists.At(i).SetAxisRange(YMin,YMax,"Y")
+    TimeStamp.Draw()
+    canvas2.Print(outdir+Hists.At(i).GetName()+"frame.png")
+ 
