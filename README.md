@@ -38,15 +38,19 @@
 
   - There are a few softwares needed before running this package. A list below.
 
+  - Python 2.7 and extensions numpy and opencv (needed so that pyROOT will run) 
+    + download: python 2.7 can be found many places, it is generally installed
+        on mac devices, and can be installed via the 'sudo apt install python'
+        command on Ubuntu. numpy and opencv are both extensions and can be installed
+        from the same source as python ie 'sudo apt install python-numpy'
+    + information: PyRoot is only supported using python 2.7
+
   - ExifTool (read .seq file produced by Flir IR camera)
     + download: http://www.sno.phy.queensu.ca/~phil/exiftool/
     + information: http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/FLIR.html (e.g.: .seq to .png)
     + command: "exiftool -Emissivity Test.seq" gives "Emissivity : 0.95"
     + command: "exiftool -FLIR:all Test.seq" gives all properties related to the .seq
     + command: "exiftool -RawThermalImage -b  Test.seq > firstImage.dat" extracting the first image from Test.seq
-
-  - MacPorts (needed for command 'convert', see share/binarytotext.sh)  
-    + download: https://www.macports.org/install.php
 
   - ImageMagick (needed for command 'convert') 
     + download: http://cactuslab.com/imagemagick/
