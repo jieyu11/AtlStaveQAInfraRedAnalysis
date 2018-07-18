@@ -23,7 +23,8 @@ echo '------ converting seq to binary ------ '
 # produce the binary files frame by frame as seq_n*.fff
 #
 
-./share/seqtobinary.pl $1 $binarydir
+./share/seqToBin.py $1 $binarydir     #This should work for any number of sequence files...
+#./share/seqtobinary.pl $1 $binarydir #This method works for small sequence files
 echo ''
 
 txtoutdir=tout

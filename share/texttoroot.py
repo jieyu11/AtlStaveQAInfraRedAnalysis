@@ -93,8 +93,8 @@ class TextToRoot:
   """
 
   """
-  _parameters = { "R1": 0., "R2": 0., "B": 0., "O": 0., "F": 0., "Emissivity": 0.9, "ReflTemp": 22., "AtomTemp": 22., "Transmissivity": 1.}
-
+  _parameters = { "R1": 0., "R2": 0., "B": 0., "O": 0., "F": 0., "Emissivity": 0.79, "ReflTemp": 22., "AtomTemp": 22., "Transmissivity": 1.}
+  #Emissivity of the stave is 0.9, pipefoam is 0.79
   def __init__ (self, cfg_name = "config") :
     self._status = 0
     if not os.path.isfile( cfg_name ):
@@ -197,8 +197,18 @@ class TextToRoot:
         continue;
       else:
         print ("INFO:<TEXTTOROOT::CONVERT> converting " + fname + " to root file. ")
-  
-      strRooName = outdir + "/" + inname + "_" + str(outidx) + ".root" 
+ 
+      outnum = str(outidx)
+      if outidx < 10:
+        outnum = "0000" + outnum
+      elif outidx < 100:
+        outnum = "000" + outnum
+      elif outidx < 1000:
+        outnum = "00" + outnum
+      elif outidx < 10000:
+        outnum = "0" + outnum
+       
+      strRooName = outdir + "/" + inname + "_" + outnum + ".root" 
       f_roo = ROOT.TFile( strRooName, "recreate")
   
       atree = ROOT.TTree("atree", "a tree of temperature data");
@@ -294,8 +304,8 @@ class TextToRoot:
           #
           # Initialize the values with 0 for the average frame when reading the first frame
           #
-          if ( outidx == 0 ):
-            avg_temperature_2d = [[ 0. for x in range( nxpixel[0] )] for y in range( nypixel[0] )]
+          ###if ( outidx == 0 ):
+          avg_temperature_2d = [[ 0. for x in range( nxpixel[0] )] for y in range( nypixel[0] )]
   
           #
           # keep the first frame time information for the average one!
@@ -370,7 +380,7 @@ def main():
     return
   else:
     str_outdir = sys.argv[1];
-    int_ninput = int( sys.argv[2] );
+    int_ninput = int( sys.argv[2] )#+3214;
 
   str_cfg = "config"
   if (nargv >= 4):
@@ -388,7 +398,7 @@ def main():
   if (nargv >= 7):
     str_inext = sys.argv[6];
 
-  ist_txtroo = TextToRoot( str_cfg )
+  ist_txtroo = TextToRoot( str_cfg ) 
   ist_txtroo.convert( str_outdir, int_ninput, str_indir, str_inname, str_inext)
   print (' Convert. Done!')
 
