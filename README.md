@@ -48,6 +48,7 @@
   - ExifTool (read .seq file produced by Flir IR camera)
     + download: http://www.sno.phy.queensu.ca/~phil/exiftool/
     + information: http://www.sno.phy.queensu.ca/~phil/exiftool/TagNames/FLIR.html (e.g.: .seq to .png)
+    + command: "exiftool Test.seq" gives all information about the camera
     + command: "exiftool -Emissivity Test.seq" gives "Emissivity : 0.95"
     + command: "exiftool -FLIR:all Test.seq" gives all properties related to the .seq
     + command: "exiftool -RawThermalImage -b  Test.seq > firstImage.dat" extracting the first image from Test.seq
