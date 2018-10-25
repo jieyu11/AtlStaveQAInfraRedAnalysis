@@ -88,6 +88,8 @@ import sys
 import os
 import numpy
 import math
+import resource
+import gc
 
 class TextToRoot:
   """
@@ -188,9 +190,25 @@ class TextToRoot:
     avg_btree.Branch('date', avg_date, 'date/I')
     avg_btree.Branch('hour', avg_hour, 'hour/I')
     avg_btree.Branch('minute', avg_minute, 'minute/I')
-    avg_btree.Branch('second', avg_second, 'second/D')
- 
+    avg_btree.Branch('second', avg_second, 'second/D') 
+
+    #Things that didn't need to be in the loop
+    temperature = numpy.zeros(1, dtype=float)
+    xpos  = numpy.zeros(1, dtype=int)
+    ypos  = numpy.zeros(1, dtype=int)
+    index  = numpy.zeros(1, dtype=int)
+    nxpixel = numpy.zeros(1, dtype=int)
+    nypixel = numpy.zeros(1, dtype=int)
+    year = numpy.zeros(1, dtype=int)
+    month = numpy.zeros(1, dtype=int)
+    date = numpy.zeros(1, dtype=int)
+    hour = numpy.zeros(1, dtype=int)
+    minute = numpy.zeros(1, dtype=int)
+    second = numpy.zeros(1, dtype=float)
+
+
     for outidx in range(n_inputs):
+      #print 'Memory usage BOL: %s (MB)' % str(float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/1048576)
       fname = indir + "/" + inname + "_" + str(outidx) + "." + inext
       if not os.path.isfile( fname ):
         print ("ERROR:<TEXTTOROOT::CONVERT> file name " + fname + " is incorrect. ")
@@ -210,25 +228,13 @@ class TextToRoot:
        
       strRooName = outdir + "/" + inname + "_" + outnum + ".root" 
       f_roo = ROOT.TFile( strRooName, "recreate")
-  
+ 
       atree = ROOT.TTree("atree", "a tree of temperature data");
-      temperature = numpy.zeros(1, dtype=float)
-      xpos  = numpy.zeros(1, dtype=int)
-      ypos  = numpy.zeros(1, dtype=int)
       atree.Branch('temperature', temperature, 'temperature/D')
       atree.Branch('xpos', xpos, 'xpos/I')
       atree.Branch('ypos', ypos, 'ypos/I')
   
       btree = ROOT.TTree("btree", "a tree of camera information");
-      index  = numpy.zeros(1, dtype=int)
-      nxpixel = numpy.zeros(1, dtype=int)
-      nypixel = numpy.zeros(1, dtype=int)
-      year = numpy.zeros(1, dtype=int)
-      month = numpy.zeros(1, dtype=int)
-      date = numpy.zeros(1, dtype=int)
-      hour = numpy.zeros(1, dtype=int)
-      minute = numpy.zeros(1, dtype=int)
-      second = numpy.zeros(1, dtype=float)
       btree.Branch('index', index, 'index/I')
       btree.Branch('nxpixel', nxpixel, 'nxpixel/I')
       btree.Branch('nypixel', nypixel, 'nypixel/I')
@@ -244,6 +250,7 @@ class TextToRoot:
       il = -1  # ith line
       ipix = 0 # ith pixel
       nempty_line = 0 # numbers of empty lines (shouldn't be any.)
+     
       for line in f:
         il = il + 1
   
@@ -289,7 +296,7 @@ class TextToRoot:
           hour[0] = int(str_hms[0])
           minute[0] = int(str_hms[1]) 
           second[0] = float(str_hms[2])
-        elif ( il == 1 ) or ( il == 3 ): 
+        elif ( il == 1 ) or ( il == 3 ):  
           continue
         elif ( il == 2 ):
           if ( len(content) < 2 ):
@@ -304,13 +311,13 @@ class TextToRoot:
           #
           # Initialize the values with 0 for the average frame when reading the first frame
           #
-          ###if ( outidx == 0 ):
-          avg_temperature_2d = [[ 0. for x in range( nxpixel[0] )] for y in range( nypixel[0] )]
+          if ( outidx == 0 ):
+            avg_temperature_2d = [[ 0. for x in range( nxpixel[0] )] for y in range( nypixel[0] )]
   
           #
           # keep the first frame time information for the average one!
           #
-          if ( outidx == 0):
+          
             avg_nxpixel[0] = nxpixel[0]
             avg_nypixel[0] = nypixel[0]
             avg_year[0] = year[0]
@@ -319,11 +326,13 @@ class TextToRoot:
             avg_hour[0] = hour[0]
             avg_minute[0] = minute[0]
             avg_second[0] = second[0]
-        else:
+        else: 
           #
           # content is a list of raw counts
-          #
-          for str_count in content:
+          #----------------------------MEMORY LEAK BELOW
+          
+          for str_count in content: 
+
             xpos[0] = int ( ipix % nxpixel[0] )
 
             #
@@ -339,19 +348,24 @@ class TextToRoot:
   
             ipix = ipix + 1
             atree.Fill()
+          #----------------------------MEMORY LEAK ABOVE
           # end of one line
           # ---------------
 
         # check the line number
         # ---------------
-
+     
       # end of all lines
       # ----------------
+      #print 'Memory usage B4C: %s (MB)' % str(float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/1048576)
 
-      f = open( fname, 'r')
+      f.close()
       f_roo.Write()
-      f_roo.Close()
-  
+      #print(f_roo.GetSize())
+      
+      #print (str(atree.GetTotBytes()/1048576)) 
+      #print 'Memory usage EOL: %s (MB)' % str(float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/1048576)
+      
     #
     # now deal with the average
     #
@@ -364,7 +378,7 @@ class TextToRoot:
         avg_atree.Fill()
     f_roo_avg.Write()
     f_roo_avg.Close()
-
+    #print 'Memory usage Fin: %s (MB)' % str(float(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)/1048576)
 def print_usage( s_function):
   print ("Usage: " + s_function + " OUT_DIR NUM_INPUT_FILES [CONFIG=config] [IN_DIR=tout] [IN_NAME=frame] [IN_EXT=pgm]")
 

@@ -49,7 +49,10 @@ def main():
     os.system('./frameanal.py roo/frame_average.root')
     #Rename the outdir
     outfilename = inputfiles[i].split('.')[0]
-    os.system('mv plot plot-'+outfilename)
+    try:
+      os.system('mv plot plot-'+outfilename)
+    except:
+      os.system('mv roo/frame_average.root '+outfilename)
   endtime = time.strftime('%a, %d %b %Y %H:%M:%S',time.localtime())
 
   print('Start Time: '+str(starttime))  
