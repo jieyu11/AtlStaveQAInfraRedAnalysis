@@ -44,7 +44,7 @@ def main():
     print('  Start Time   : '+str(starttime))  
     print('  Current Time : '+str(ctime))
     #Read the sequence
-    os.system('bash read_sequence.sh '+inputfiles[i])
+    os.system('bash read_sequence.sh '+inputfiles[i]+' -e 0.92')
     #Create the plot
     os.system('./frameanal.py roo/frame_average.root')
     #Rename the outdir
