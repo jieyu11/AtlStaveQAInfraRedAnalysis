@@ -6,6 +6,31 @@
 * Run:
   - Check installation below first!
 
+  - Once you believe that the system is set appropriately try running on the example file
+
+    ./seqToProfile.py FlirIR_rec_example.seq
+
+    This will run the read_sequence.sh and frameanal.py scripts for the FlirIR_rec_example.seq file.
+    This should generate a folder called: plot-FlirIR_rec_example/   containing 
+    two more folders called: hist/ and fit/  along with plots of the stave core.
+
+    Next test the defect finder.
+
+    ./defectFinder.py plot-FlirIR_rec_example/result.root
+
+    This python script will plot all attached result.root files and can be used
+    to make all sorts of plots.
+
+  - ./seqToProfile.py [sequence files]
+    + performs the full conversion on each applied sequence file. If it fails to
+      find a configuration it may not save the results and you may have to individually
+      do the steps below.
+
+      1. performs read_sequence with preset emissivity 0.92
+      2. performs frameanal.py
+      3. reorganizes all of the appropriate needed files into a single folder
+         based off the name of each individual sequence file.
+
   - ./read_sequence.sh FlirIR_rec_example.seq  [-e (OR -Emissivity) 0.85 (OR any value [0, 1]) ]
     + convert .seq to .root 
     + each image is stored in one root file roo/frame_idx.root, idx = [0, ...]
@@ -37,6 +62,7 @@
 * Installation:
 
   - There are a few softwares needed before running this package. A list below.
+    (Most(I think all) of these packages can be easily downloaded in Ubuntu using apt-get install [package])
 
   - Python 2.7 and extensions numpy and opencv (needed so that pyROOT will run) 
     + download: python 2.7 can be found many places, it is generally installed
