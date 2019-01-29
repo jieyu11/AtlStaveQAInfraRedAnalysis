@@ -93,4 +93,16 @@
                           echo 'import site; site.addsitedir("/usr/local/lib/python2.7/site-packages")' >> /Users/jieyu/Library/Python/2.7/lib/python/site-packages/homebrew.pth
         after installing opencv
 
++ Other Packages
+
+  - SliceFinder.py
+    + This package takes a stave core's average_frame.root file and then converts
+      it into average strips across each of the modules. 
+    + It is currently written for a 13 module stave core.
+    + To Run with example files:
+      ./extras/SliceFinder.py extras/SliceFinder_Example_Files/Example_Stave7L_m55/frame_average.root
+    + This will use an example .csv file from graham with 14 modules(it ignores 
+      the ones closest to the end of stave card (I Think).
+
+
 

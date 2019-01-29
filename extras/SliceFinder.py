@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """
 @run
-  ./SliceFinder.py Path/To/frame_average.root
+  ./SliceFinder.py [Path/To/frame_average.root] [optional: Path/To/csv file]
 
   parameters
 
@@ -21,7 +21,7 @@
 
   This program takes a frame_average.root file and converts it into average 
   temperature strips across each of the module locations. It loads in a csv
-  file named FEATemps.csv
+  file named FEATemps.csv if you don't specify
 
 @reference
 
