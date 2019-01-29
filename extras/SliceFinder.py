@@ -475,7 +475,7 @@ def main():
   #Load in file path name
   nargv = len(sys.argv)
   if nargv < 3:
-    inputCSV = "extras/FEATemps.csv"
+    inputCSV = "extras/SliceFinder_Example_Files/FEATemps.csv"
   else:
     inputCSV = sys.argv[2] 
 
@@ -490,6 +490,8 @@ def main():
     elif 'plot-' in inputfile:
       strFileNum = inputfile.split('plot-')[1]
       name = 'Rec'+strFileNum
+    elif 'Example' in inputfile:
+      name = 'Example'
   except:
     name = 'OtherData'
 
