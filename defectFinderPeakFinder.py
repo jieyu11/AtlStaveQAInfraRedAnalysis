@@ -63,20 +63,36 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
 
   #FINDING FLAWS---------------------------------------------------------- 
   HistClone.Draw()
-  HistClone = BandPassFFT(HistClone,2,200) 
-  HistBackground = objSpectrum.Background(HistClone,17,"")
+  if bolVerb > 0:
+    canvas.Print(fitdir+filename+"InvertPlot.pdf")
+ 
 
-  HistPeaks = HistClone - HistBackground
 
-  sigma = 6
+  Hist_SM_IV = HistClone.Clone()#BandPassFFT(HistClone,2,200) 
+
+  Hist_SM_IV.Draw() 
+  if bolVerb > 0:
+    canvas.Print(fitdir+filename+"SmoothedInvertPlot.pdf")
+
+
+  HistWhatsRemoved = HistClone2 - Hist_SM_IV
+  HistWhatsRemoved.Draw() 
+  if bolVerb > 0:
+    canvas.Print(fitdir+filename+"WhatsRemovedPlot.pdf")
+ 
+  HistBackground = objSpectrum.Background(Hist_SM_IV,17,"")
+
+  HistPeaks = Hist_SM_IV - HistBackground
+
+  sigma = 8
   threshold = 0.05
-  nfound = objSpectrum.Search(HistClone,sigma,"noMarkov",threshold)
+  nfound = objSpectrum.Search(HistPeaks,sigma,"noMarkov",threshold)
   peakPosX = objSpectrum.GetPositionX()
 
-  HistClone.Draw()
+  Hist_SM_IV.Draw()
   HistBackground.Draw("same")
   if bolVerb > 0:
-    canvas.Print(fitdir+filename+"BackgroundInvertPlot.png")
+    canvas.Print(fitdir+filename+"BackgroundInvertPlot.pdf")
  
   PeakPosArray = np.zeros(nfound) 
   for i in range(nfound):
@@ -85,13 +101,13 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
   
   MFlaws = []
   for i in range(nfound):
-    #Find the Flaws Method 1---------- 
-    fit = ROOT.TF1("pgaus1","[0]*exp(-0.5*((x-[1])/[2])^2)",Xmin,Xmax)
+    #Find the Flaws Method 1---------- #Find Peak Shape 
+    fit = ROOT.TF1("pgaus1","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]",Xmin,Xmax)
     fit.SetParLimits(0,0,2)
-    fit.SetParLimits(1,peakPosX[i]-5,peakPosX[i]+5)
+    fit.SetParLimits(1,peakPosX[i]-sigma/2,peakPosX[i]+sigma/2)
     fit.SetParLimits(2,0.25,10)
-    fit.SetParameters(1,peakPosX[i],1) 
-    HistPeaks.Fit(fit,"Q","",peakPosX[i]-1.5*sigma,peakPosX[i]+1.5*sigma)
+    fit.SetParameters(1,peakPosX[i],1,0) 
+    HistPeaks.Fit(fit,"Q","",peakPosX[i]-sigma/2,peakPosX[i]+sigma/2)
     #Get the fit info
     FitPeakPosX = fit.GetParameter(1)
     FitSigma = abs(fit.GetParameter(2))
@@ -100,15 +116,22 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
     FitHeight = abs(fit.GetParameter(0)) 
     FitGoodness = abs(FitChiSq/FitDegFr)
     FitLevel = 0
+    if bolVerb > 0:
+      canvas.Print(fitdir+filename+str(i)+"_FitResults0.pdf")
 
-    #Find the Flaws Method 2----------
+    #Find peak offset
+    fitOff = ROOT.TF1("line","[0]",Xmin,Xmax)
+    HistClone2.Fit(fitOff,"Q","")
+    FitOffset = fitOff.GetParameter(0)
+
+    #Find the Flaws Method 2---------- #Fit with constant background
     fit2 = ROOT.TF1("pgaus2","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]",Xmin,Xmax)
-    fit2.SetParLimits(0,0,5)
+    fit2.SetParLimits(0,FitHeight,FitHeight*5)
     fit2.SetParLimits(1,peakPosX[i]-5,peakPosX[i]+5)
-    fit2.SetParLimits(2,0.25,10)
-    fit2.SetParLimits(3,-.5,.5)
-    fit2.SetParameters(FitHeight,FitPeakPosX,FitSigma,0) 
-    HistPeaks.Fit(fit2,"Q","",peakPosX[i]-sigma,peakPosX[i]+sigma)
+    fit2.SetParLimits(2,FitSigma-FitSigma*0.1,FitSigma+FitSigma*0.1)
+    fit2.SetParLimits(3,FitOffset-5,FitOffset+5)
+    fit2.SetParameters(FitHeight,FitPeakPosX,FitSigma,FitOffset) 
+    HistClone2.Fit(fit2,"Q","",peakPosX[i]-4*FitSigma,peakPosX[i]+4*FitSigma)
     #Get the fit info
     Fit2PeakPosX = fit2.GetParameter(1)
     Fit2Sigma = abs(fit2.GetParameter(2))
@@ -117,24 +140,25 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
     Fit2Height = abs(fit2.GetParameter(0)) 
     Fit2Goodness = abs(Fit2ChiSq/Fit2DegFr)
 
-    if Fit2Goodness < FitGoodness:
-      FitPeakPosX = Fit2PeakPosX
-      FitSigma = Fit2Sigma
-      FitHeight = Fit2Height
-      FitGoodness = Fit2Goodness
-      FitLevel = 1
-      if bolVerb > 0:
-        canvas.Print(fitdir+filename+str(i)+"_FitResults.png")
+    #This fit should be worse... but it requires the starting conditions from the first fit
+    #if Fit2Goodness < FitGoodness:
+    FitPeakPosX = Fit2PeakPosX
+    FitSigma = Fit2Sigma
+    FitHeight = Fit2Height
+    FitGoodness = Fit2Goodness
+    FitLevel = 1
+    if bolVerb > 0:
+      canvas.Print(fitdir+filename+str(i)+"_FitResults1.pdf")
 
-    #Find Flaws Method 3----------
+    #Find Flaws Method 3---------- #Fit with linear background
     fit3 = ROOT.TF1("pgaus3","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]+[4]*x",Xmin,Xmax)
     fit3.SetParLimits(0,FitHeight-0.1,FitHeight+0.1)
     fit3.SetParLimits(1,FitPeakPosX-1,FitPeakPosX+1)
     fit3.SetParLimits(2,FitSigma-1,FitSigma+1)
-    fit3.SetParLimits(3,-1,1)
+    fit3.SetParLimits(3,FitOffset-10,FitOffset+10)
     fit3.SetParLimits(4,-2,2)
-    fit3.SetParameters(FitHeight,FitPeakPosX,FitSigma,0,0) 
-    HistClone.Fit(fit3,"Q","",peakPosX[i]-sigma,peakPosX[i]+sigma)
+    fit3.SetParameters(FitHeight,FitPeakPosX,FitSigma,FitOffset,0) 
+    HistClone2.Fit(fit3,"Q","",peakPosX[i]-4*FitSigma,peakPosX[i]+4*FitSigma)
     #Get the fit info
     Fit3PeakPosX = fit3.GetParameter(1)
     Fit3Sigma = abs(fit3.GetParameter(2))
@@ -149,19 +173,33 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
       FitHeight = Fit3Height
       FitGoodness = Fit3Goodness
       FitLevel = 2
-      if bolVerb > 0:
-        canvas.Print(fitdir+filename+str(i)+"_FitResults.png")
+    if bolVerb > 0:
+      canvas.Print(fitdir+filename+str(i)+"_FitResults2.pdf")
 
-    #Height Finding
-    fit4 = ROOT.TF1("pgaus4","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]+[4]*x",Xmin,Xmax)
+    #Find Flaws Method 4---------- #Fit with parabolic background
+    fit4 = ROOT.TF1("pgaus4","[0]*exp(-0.5*((x-[1])/[2])^2)+[3]+[4]*x+[5]*x*x",Xmin,Xmax)
     fit4.SetParLimits(0,FitHeight-1,FitHeight+2)
     fit4.SetParLimits(1,FitPeakPosX-1,FitPeakPosX+1)
     fit4.SetParLimits(2,FitSigma-0.5,FitSigma+0.5)
-    fit4.SetParLimits(3,-50,50)
-    fit4.SetParLimits(4,-2,2)
-    fit4.SetParameters(FitHeight,FitPeakPosX,FitSigma,0,0) 
-    HistClone2.Fit(fit4,"Q","",peakPosX[i]-sigma,peakPosX[i]+sigma)
-    FitHeightMeas = fit4.GetParameter(0)
+    fit4.SetParLimits(3,FitOffset-10,FitOffset+10)
+    fit4.SetParLimits(4,fit3.GetParameter(4)-2,fit3.GetParameter(4)+2)
+    fit4.SetParLimits(5,-5,5)
+    fit4.SetParameters(FitHeight,FitPeakPosX,FitSigma,FitOffset,fit3.GetParameter(4),0) 
+    HistClone2.Fit(fit4,"Q","",peakPosX[i]-4*FitSigma,peakPosX[i]+4*FitSigma)
+    try:
+      Fit4Goodness = abs(fit4.GetChisquare()/fit4.GetNDF())
+    except:
+      Fit4Goodness = 999
+    if Fit4Goodness < FitGoodness:
+      FitPeakPosX = fit4.GetParameter(1)
+      FitSigma = abs(fit4.GetParameter(2))
+      FitHeight = abs(fit4.GetParameter(0))
+      FitGoodness = Fit4Goodness
+      FitLevel = 3
+    if bolVerb > 0:
+      canvas.Print(fitdir+filename+str(i)+"_FitResults3.pdf")
+
+    FitHeightMeas = FitHeight
 
     AcceptX = 2         #   Any peak that is found that is not +/- acceptace from
                         # the edges of the histogram or the peakX position 
@@ -174,8 +212,10 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
     if bolTempIsHot == False:
       TScale = 2
 
-    if FitPeakPosX > peakPosX[i] -AcceptX and FitPeakPosX < peakPosX[i]+AcceptX and\
-       FitPeakPosX>Xmin+AcceptX and FitPeakPosX< Xmax-AcceptX and\
+    if FitPeakPosX > peakPosX[i] -AcceptX and\
+       FitPeakPosX < peakPosX[i]+AcceptX and\
+       FitPeakPosX>Xmin+AcceptX and\
+       FitPeakPosX< Xmax-AcceptX and\
        FitGoodness < 0.05*TScale:
       if abs(FitSigma*SizeConstant)<8 and abs(FitSigma*SizeConstant) > 1 and FitHeightMeas > 0.25*TScale: 
         MFlaws = np.append(MFlaws,[FitLevel,FitPeakPosX,FitSigma,FitHeightMeas,FitGoodness])
@@ -222,7 +262,7 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
 
   if bolVerb > 0: 
     canvas.Print(outdir+filename+"Tpeaks.root")
-    canvas.Print(outdir+filename+"Tpeaks.png")
+    canvas.Print(outdir+filename+"Tpeaks.pdf")
 
   #PREPPINGDEFECTINFO-----------------------------------------------------
   if 'top' in filename:
@@ -257,14 +297,10 @@ def GetDefectBoxes(DefectInfo,Ymin,Ymax):
     Xmin = Center - 0.5*DefectInfo[i*7+3]
     Xmax = Center + 0.5*DefectInfo[i*7+3] 
     Boxes = np.append(Boxes,ROOT.TBox(Xmin,Ymin,Xmax,Ymax))
-    FitGoodness = DefectInfo[i*7+4]
+    FitHeight = DefectInfo[i*7+4]
     trans = 0.5
-    if FitGoodness < 0.005:
+    if FitHeight > 1:
       Boxes[i].SetFillColorAlpha(2,trans)
-    elif FitGoodness < 0.01:
-      Boxes[i].SetFillColorAlpha(5,trans)
-    elif FitGoodness < 0.03:
-      Boxes[i].SetFillColorAlpha(3,trans)
     else:
       Boxes[i].SetFillColorAlpha(4,trans)
  
@@ -321,9 +357,9 @@ def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   C1.Update()
   DefectInfo = np.append(DefectInfoTop,DefectInfoBot)
 
-  #Save the output as a png and root file
+  #Save the output as a pdf and root file
   filename = MakeFileName(inputfile)
-  C1.Print(outdir+filename+"-AllFlaws.png")
+  C1.Print(outdir+filename+"-AllFlaws.pdf")
   C1.Print(outdir+filename+"-AllFlaws.root")
 
   #Output the defect information
@@ -443,12 +479,14 @@ def PlotDefectsHnC(inputfile1,inputfile2,TDefects,BDefects,outdir,fitdir,C1,bolV
   bolTempHot1 = TempIsHot(HistTop1)
   bolTempHot2 = TempIsHot(HistTop2)
 
+  '''
   if bolTempHot1 == False:
     HistTop1 = InvertHistogram(HistTop1)
     HistBot1 = InvertHistogram(HistBot1)
   if bolTempHot2 == False:
     HistTop2 = InvertHistogram(HistTop2)
     HistBot2 = InvertHistogram(HistBot2)
+  '''
 
   #Create Pads!
   C1.Clear()
@@ -528,7 +566,7 @@ def PlotDefectsHnC(inputfile1,inputfile2,TDefects,BDefects,outdir,fitdir,C1,bolV
   filename1 = MakeFileName(inputfile1)  
   filename2 = MakeFileName(inputfile2)
 
-  C1.Print(outdir+filename1+filename2+"-AllFlaws.png")
+  C1.Print(outdir+filename1+filename2+"-AllFlaws.pdf")
   C1.Print(outdir+filename1+filename2+"-AllFlaws.root")
 
  
@@ -572,7 +610,7 @@ def DefectAnalysis(Defects,outdir,Canvas):
     for j in range(nDefects):
       Hist.Fill(Defects[j*nThings+i+3],1)
     Hist.Draw()
-    Canvas.Print(outdir+Name[i]+"_Hist.png")
+    Canvas.Print(outdir+Name[i]+"_Hist.pdf")
 
   Width =[]
   Height = []
@@ -601,23 +639,23 @@ def DefectAnalysis(Defects,outdir,Canvas):
   mg.GetXaxis().SetTitle("Width [ cm ]")
   mg.GetYaxis().SetTitle("Height [ #circC ]")
   
-  Canvas.Print(outdir+"WidthVHeightGraph.png")
+  Canvas.Print(outdir+"WidthVHeightGraph.pdf")
   Canvas.Print(outdir+"WidthVHeightGraph.root")
 
 #------------------------------------------------------------------------------
-def GetOneLineDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
+def GetOneLineDefects(inputfile,outdir,fitdir,canvas,bolVerb = 0):
   """
   This takes an input file and gets all of the defects and prints all of them on 
   a single plot that is broken into the top(EOS) and bottom pipes thermal profile.
   It then returns the Defect Info 
   """
   #Find the Defects
-  bendlength = 10 #Not certain if this is what we want...
-  OneLineHist = OneLine(inputfile,outdir,C1,bendlength)
-  DefectInfo = FindPeaks(OneLineHist,outdir,fitdir,C1,bolVerb)
+  bendlength = 12 #Not certain if this is what we want...
+  OneLineHist = OneLine(inputfile,outdir,canvas,bendlength)
+  DefectInfo = FindPeaks(OneLineHist,outdir,fitdir,canvas,bolVerb)
   
-  C1.Clear()
-  C1.Update()
+  canvas.Clear()
+  canvas.Update()
 
   bolTempHot = TempIsHot(OneLineHist)
     
@@ -633,8 +671,8 @@ def GetOneLineDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   YMin = YCent - Scale/2
 
   #Plot the Histograms and Defects
-  C1.SetGrid()
-  C1.cd()
+  canvas.SetGrid()
+  canvas.cd()
 
   OneLineHist.Draw()
 
@@ -652,12 +690,12 @@ def GetOneLineDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   Boxes = GetDefectBoxes(DefectInfo,YMin,YMax)
   for Box in Boxes:
     Box.Draw() 
-  C1.Update()
+  canvas.Update()
 
-  #Save the output as a png and root file
+  #Save the output as a pdf and root file
   filename = MakeFileName(inputfile)
-  C1.Print(outdir+filename+"-AllFlawsLine.png")
-  C1.Print(outdir+filename+"-AllFlawsLine.root")
+  canvas.Print(outdir+filename+"-AllFlawsLine.pdf")
+  canvas.Print(outdir+filename+"-AllFlawsLine.root")
  
   return DefectInfo
 

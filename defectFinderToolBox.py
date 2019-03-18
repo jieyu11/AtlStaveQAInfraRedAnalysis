@@ -680,15 +680,19 @@ def FindAvgTemps(inputfiles,outdir,canvas):
   outputFile.close
  
 #---------------------------------------------------------------------
-def OneLineMulti(inputfiles,outdir,canvas,bendLength = 10):
+def OneLineMulti(inputfiles,outdir,canvas,bendLength = 12):
   """
   Plots all attached input files on one plot
+
+  WORKS WELL (March 5, 2019)
   """
-  Hists = ROOT.TList()
+
+  Hists = ROOT.TList() #Place to store all of the plots
   YMax =-999
   YMin = 999
   canvas.Clear()
   canvas.cd()
+  canvas.SetGrid(1,1)
   Legend = ROOT.TLegend(0.1,0.7,0.3,0.9)
   Legend.SetHeader("Temperature Comparison","C")
   Hists.AddLast(Legend)
@@ -704,8 +708,12 @@ def OneLineMulti(inputfiles,outdir,canvas,bendLength = 10):
     Hists.AddLast(HistN) 
     Legend.AddEntry(HistN,HistN.GetName())
   for i in range(1,len(inputfiles)+1):
-    Hists.At(i).Draw("Same LC CM")
-    Hists.At(i).SetAxisRange(YMin,YMax,"Y")
+    if i == 1: #Reset Base Drawing
+      Hists.At(i).Draw("LC CM")
+      Hists.At(i).SetAxisRange(YMin,YMax,"Y")
+    else:
+      Hists.At(i).Draw("Same LC CM")
+      Hists.At(i).SetAxisRange(YMin,YMax,"Y")
   Legend.Draw()
   canvas.Update()
   canvas.Print(outdir+name+"CombinedTempProfile.png")
