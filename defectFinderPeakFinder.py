@@ -86,7 +86,7 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
 
   sigma = 8
   threshold = 0.05
-  nfound = objSpectrum.Search(HistPeaks,sigma,"noMarkov",threshold)
+  nfound = objSpectrum.Search(HistPeaks,sigma,"noMarkov",threshold) #This removes the background again... I have left it in
   peakPosX = objSpectrum.GetPositionX()
 
   Hist_SM_IV.Draw()
@@ -283,7 +283,7 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
     DefectInfo = np.append(DefectInfo,MFlaws[i*5])                        #Fit Level 
   return DefectInfo
 #------------------------------------------------------------------------------
-def GetDefectBoxes(DefectInfo,Ymin,Ymax):
+def GetDefectBoxes(DefectInfo,Ymin,Ymax,bolTempHot = True):
   """
   Creates a list of TBox objects for each defect
   """
@@ -291,15 +291,19 @@ def GetDefectBoxes(DefectInfo,Ymin,Ymax):
   #Ymax = Hist.GetMaximum()
   #Ymin = Hist.GetMinimum()
   Boxes = []
-  #Major Flaw Boxes
+  TScale = 1
+  if bolTempHot == False:
+    TScale = 2.
+ #Major Flaw Boxes
   for i in range(len(DefectInfo)/7):
     Center = DefectInfo[i*7+2]
     Xmin = Center - 0.5*DefectInfo[i*7+3]
     Xmax = Center + 0.5*DefectInfo[i*7+3] 
     Boxes = np.append(Boxes,ROOT.TBox(Xmin,Ymin,Xmax,Ymax))
     FitHeight = DefectInfo[i*7+4]
+
     trans = 0.5
-    if FitHeight > 1:
+    if FitHeight > 1.6*TScale:
       Boxes[i].SetFillColorAlpha(2,trans)
     else:
       Boxes[i].SetFillColorAlpha(4,trans)
@@ -343,14 +347,14 @@ def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
 
   HistTop.Draw()
   HistTop.SetAxisRange(Ymin,Ymax,"Y")
-  BoxesTop = GetDefectBoxes(DefectInfoTop,Ymin,Ymax)
+  BoxesTop = GetDefectBoxes(DefectInfoTop,Ymin,Ymax,bolTempHot)
   for Box in BoxesTop:
     Box.Draw() 
   #HistTop.SetDirectory(0)
   C1.cd(2)
   HistBot.Draw()
   HistBot.SetAxisRange(Ymin,Ymax,"Y")
-  BoxesBot = GetDefectBoxes(DefectInfoBot,Ymin,Ymax)
+  BoxesBot = GetDefectBoxes(DefectInfoBot,Ymin,Ymax,bolTempHot)
   for Box in BoxesBot:
     Box.Draw()
   #HistBot.SetDirectory(0)
@@ -363,7 +367,7 @@ def GetDefects(inputfile,outdir,fitdir,C1,bolVerb = 0):
   C1.Print(outdir+filename+"-AllFlaws.root")
 
   #Output the defect information
-  PrintDefectInfo(DefectInfo,-1)
+  PrintDefectInfo(DefectInfo,-1,bolTempHot)
   
   return DefectInfo
 #------------------------------------------------------------------------------
@@ -531,7 +535,7 @@ def PlotDefectsHnC(inputfile1,inputfile2,TDefects,BDefects,outdir,fitdir,C1,bolV
   TLegend.AddEntry(HistTop2,HistTop2.GetName(),"L")
   TLegend.Draw()
 
-  TDefBoxes = GetDefectBoxes(TDefects,Min,Max)
+  TDefBoxes = GetDefectBoxes(TDefects,Min,Max,bolTempHot=True)
   for Box in TDefBoxes:
     Box.Draw()
 
@@ -557,7 +561,7 @@ def PlotDefectsHnC(inputfile1,inputfile2,TDefects,BDefects,outdir,fitdir,C1,bolV
   BLegend.Draw()
 
 
-  BDefBoxes = GetDefectBoxes(BDefects,Min,Max)
+  BDefBoxes = GetDefectBoxes(BDefects,Min,Max,bolTempHot=True)
   for Box in BDefBoxes:
     Box.Draw()
   C1.Update()
@@ -569,9 +573,21 @@ def PlotDefectsHnC(inputfile1,inputfile2,TDefects,BDefects,outdir,fitdir,C1,bolV
   C1.Print(outdir+filename1+filename2+"-AllFlaws.pdf")
   C1.Print(outdir+filename1+filename2+"-AllFlaws.root")
 
+#------------------------------------------------------------------------------
+def SigDefect(peakHeight,bolTempHot):
+  """
+  This prints out a FLAWED Stave statement during defect info printing
+  """
+
+  TScale = 1.
+  if bolTempHot == False:
+    TScale = 2.
+  if peakHeight >= 1.6*TScale:
+    print("        !!!! SIGNIFICANT DEFECT FOUND !!!!")
+
  
 #------------------------------------------------------------------------------
-def PrintDefectInfo(DefectInfo,intLine=-1):
+def PrintDefectInfo(DefectInfo,intLine=-1,bolTempHot=True):
   """
   This prints the DefectInfo array out into an easily readable format. 
   If intLine = -1 it prints all the information
@@ -584,8 +600,11 @@ def PrintDefectInfo(DefectInfo,intLine=-1):
   nThings = 7
   if bolPrintAll == True:
     for i in range(len(DefectInfo)/nThings):
+      SigDefect(DefectInfo[i*nThings+4],bolTempHot)
       print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[i*nThings],int(DefectInfo[i*nThings+1]),DefectInfo[i*nThings+2],DefectInfo[i*nThings+3],DefectInfo[i*nThings+4],DefectInfo[i*nThings+5],int(DefectInfo[i*nThings+6]))
-  else:  
+      SigDefect(DefectInfo[i*nThings+4],bolTempHot)
+  else: 
+    SigDefect(DefectInfo[intLine*nThings+4],bolTempHot)
     print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[intLine*nThings],int(DefectInfo[intLine*nThings+1]),DefectInfo[intLine*nThings+2],DefectInfo[intLine*nThings+3],DefectInfo[intLine*nThings+4],DefectInfo[intLine*nThings+5],int(DefectInfo[intLine*nThings+6]))
   if len(DefectInfo) == 0:
     print(" NO FLAWS WERE FOUND ")
@@ -687,7 +706,7 @@ def GetOneLineDefects(inputfile,outdir,fitdir,canvas,bolVerb = 0):
   OneLineHist.GetXaxis().SetTitleOffset(TitleO)
 
 
-  Boxes = GetDefectBoxes(DefectInfo,YMin,YMax)
+  Boxes = GetDefectBoxes(DefectInfo,YMin,YMax,bolTempHot)
   for Box in Boxes:
     Box.Draw() 
   canvas.Update()
