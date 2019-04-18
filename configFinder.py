@@ -13,7 +13,7 @@ import numpy as np
 import cv2
 import ROOT
 
-def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercentCutL=0.05,fltxPercentCutR=0.023,fltyPercentCut=0.20):
+def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,fltxPercentCutL=0.05,fltxPercentCutR=0.023,fltyPercentCut=0.20):
   """
   This function takes an input root stave image and finds all of the appropriate
   locations on the stave and creates a config file.
@@ -158,17 +158,26 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
         lineObj.Draw()
 
     VertData = np.sort(VertData)
-    lineData += [np.amax(VertData)]
     
-    #Check to remove finding the edge of the pipe protector
+    #Check to confine to a stave core #Updated April 18th 2019 to make better x position choices
+    StaveLength = 548.2 #13 module stave core length in pixels
     VertSep = np.amax(VertData)-np.amin(VertData)
-    if VertSep < 500:
+    if VertSep < StaveLength:
       raise ValueError("Not all vertical lines were found!!!!")
-    while VertSep > 550: #Seperation should be around 540 pixels
-      VertData = np.delete(VertData,0) 
-      VertSep = np.amax(VertData)-np.amin(VertData)
-    lineData += [np.amin(VertData)]
+    while VertSep > StaveLength + StaveLength*0.01: #Finds the size of the stave core less than 5% its maximum 
+      VertDataFrontRemoved = np.delete(VertData,0) 
+      VertDataBackRemoved = np.delete(VertData,-1)
+      VertSepFR = np.amax(VertDataFrontRemoved)-np.amin(VertDataFrontRemoved)     
+      VertSepBR = np.amax(VertDataBackRemoved)-np.amin(VertDataBackRemoved)
+      if VertSepFR > VertSepBR:
+        VertSep = VertSepFR
+        VertData = VertDataFrontRemoved
+      else:
+        VertSep = VertSepBR
+        VertData = VertDataBackRemoved
 
+    lineData += [np.amax(VertData)]
+    lineData += [np.amin(VertData)]
     #Put the found area on the plot 
     for i in range(2):
       lineObj = ROOT.TLine(lineData[2],lineData[i],lineData[3],lineData[i])
@@ -196,8 +205,8 @@ def FindPoints(strImageFile,strOutputFile,xPixels = 640,yPixels = 480,fltxPercen
  
   #Print all of the Fit Lines
   c2.Update()
-  c2.Print("AllFoundLines.png")
-  c2.Print("AllFoundLines.root")
+  c2.Print(outdir+"/AllFoundLines.pdf")
+  c2.Print(outdir+"/AllFoundLines.root")
 
   #Get Corrected Zoomed Figure
   DxcutL = int(fltxPercentCutL*Dx)

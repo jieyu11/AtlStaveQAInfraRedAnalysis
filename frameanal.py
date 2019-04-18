@@ -489,7 +489,7 @@ def main():
 
   if bolFindConfig == True:
     print ("Usage: Finding frame configuration...")
-    cf.FindPoints( str_inroo, str_cfg)
+    cf.FindPoints( str_inroo, str_cfg, str_outdir)
 
   ist_frmana = FrameAnalysis( str_inroo, str_cfg, str_outdir )
   ist_frmana.draw_frames()
