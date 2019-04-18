@@ -305,7 +305,7 @@ def PlotDiffLine(offset,file1,file2,outdir,objCanvas,intPipeNum,strType,Scale = 
   
   #PRINTING THE PLOTS    
 
-  objCanvas.Print(outdir+filename+strPipeLab+strType[:-2]+ScaleTitle+"_dif.png")  
+  objCanvas.Print(outdir+filename+strPipeLab+strType[:-2]+ScaleTitle+"_dif.pdf")  
   objCanvas.Print(outdir+filename+strPipeLab+strType[:-2]+ScaleTitle+"_dif.root")
  
 
@@ -357,7 +357,7 @@ def GetBothRMS(inputfile,outdir,canvas):
   h2.Draw()
 
   name = MakeFileName(inputfile)
-  canvas.Print(outdir+name+"RMSPlot.png")
+  canvas.Print(outdir+name+"RMSPlot.pdf")
 #Find RMS 2-------------------------------------------------------------------
 def OneLineRMS(inputfile,outdir,canvas,bendlength = 10):
   """
@@ -375,7 +375,7 @@ def OneLineRMS(inputfile,outdir,canvas,bendlength = 10):
   
   #Save it
   name = MakeFileName(inputfile)
-  canvas.Print(outdir+name+"RMSPlotLine.png")
+  canvas.Print(outdir+name+"RMSPlotLine.pdf")
 
 
 def RMS(hist,outdir,canvas):
@@ -426,7 +426,7 @@ def GetBothRMS(inputfile,outdir,canvas):
   h2.Draw()
 
   name = MakeFileName(inputfile)
-  canvas.Print(outdir+name+"RMSPlot.png")
+  canvas.Print(outdir+name+"RMSPlot.pdf")
 
 
 #-----------------------------------------------------------------------------
@@ -486,7 +486,7 @@ def OneLine(inputfile,outdir,canvas,bendLength = 1):
   #CombHist.Draw()    
   #canvas.Update()
   #canvas.Print(outdir+name+"Line.root")
-  #canvas.Print(outdir+name+"Line.png")
+  #canvas.Print(outdir+name+"Line.pdf")
 
   return CombHist
   
@@ -611,7 +611,7 @@ def OneLineComp(inputfile0,inputfile1,outdir,canvas,bendLength = 1,Scale = False
  
   #PRINTING THE PLOTS    
   filename = Hist0Title+Hist1Title 
-  canvas.Print(outdir+filename+ScaleTitle+"_LineDif.png")  
+  canvas.Print(outdir+filename+ScaleTitle+"_LineDif.pdf")  
   canvas.Print(outdir+filename+ScaleTitle+"_LineDif.root") 
 #---------------------------------------------------------------------
 def FindTempHist(inputfile,outdir,canvas):
@@ -659,7 +659,7 @@ def FindTempHist(inputfile,outdir,canvas):
   canvas.cd()
   canvas.Clear()
   HistNet.Draw()
-  canvas.Print(outdir+nametag+'TempHist.png')
+  canvas.Print(outdir+nametag+'TempHist.pdf')
 
   return [MeanVal,MeanErr]
 
@@ -672,8 +672,9 @@ def FindAvgTemps(inputfiles,outdir,canvas):
   outputFile.write(StartLine)
   outputFile.close()
   outputFile = open('AvgTempData.csv','a')
+  counter = 0
   for fyle in inputfiles:
-    Data = FindTempHist(fyle,outdir,canvas)
+    Data = FindTempHist(fyle,outdir[counter],canvas)
     strData = str(Data[0])+','+str(Data[1])
     outline = fyle+','+strData+'\n'
     outputFile.write(outline)
@@ -699,7 +700,7 @@ def OneLineMulti(inputfiles,outdir,canvas,bendLength = 12):
   name = ""
 
   for i in range(len(inputfiles)):
-    HistN = OneLine(inputfiles[i],outdir,canvas,bendLength)
+    HistN = OneLine(inputfiles[i],outdir[i],canvas,bendLength)
     YMax = max(YMax,HistN.GetMaximum())
     YMin = min(YMin,HistN.GetMinimum())
     name += HistN.GetName()
@@ -715,8 +716,14 @@ def OneLineMulti(inputfiles,outdir,canvas,bendLength = 12):
       Hists.At(i).Draw("Same LC CM")
       Hists.At(i).SetAxisRange(YMin,YMax,"Y")
   Legend.Draw()
+  if len(name) > 30:
+    listname = name.split("Rec-")
+    NewName = ""
+    for i in listname:
+      NewName += i[0:6]+"_"
+    name = NewName
   canvas.Update()
-  canvas.Print(outdir+name+"CombinedTempProfile.png")
+  canvas.Print(outdir[0]+name+"CombinedTempProfile.pdf")
 
   return
   #Makes frames for a video!
@@ -734,5 +741,5 @@ def OneLineMulti(inputfiles,outdir,canvas,bendLength = 12):
     Hists.At(i).Draw("LC CM")
     Hists.At(i).SetAxisRange(YMin,YMax,"Y")
     TimeStamp.Draw()
-    canvas2.Print(outdir+Hists.At(i).GetName()+"frame.png")
+    canvas2.Print(outdir[0]+Hists.At(i).GetName()+"frame.pdf")
  

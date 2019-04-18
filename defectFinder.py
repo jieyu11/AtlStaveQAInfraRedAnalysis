@@ -70,7 +70,7 @@ def ComInfo():
 
 
 
-def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
+def TextCommands(inputfile,outdirs,fitdirs,canvas,bolVerb):
   """
   This allows the user to give commands to replot items and keep the program and
   to edit what is plotted
@@ -89,11 +89,13 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
     elif Vin == 'Defs':
       #Cnew = ROOT.TCanvas("cnew","cnew",0,0,2000,600)
       Defs = []
+      counter = 0
       for i in inputfile:
-        Defs = np.append(Defs,GetDefects(i,outdir,fitdir,canvas,bolVerb))
+        Defs = np.append(Defs,GetDefects(i,outdirs[counter],fitdirs[counter],canvas,bolVerb))
         if bolVerb == True:
-          DefectAnalysis(Def,outdir,canvas)
-      DefectAnalysis(Defs,outdir,canvas)
+          DefectAnalysis(Defs,outdirs[0],canvas)
+        counter+=1
+      #DefectAnalysis(Defs,outdirs[0],canvas)
     elif Vin == 'h':
       ComInfo()
     elif 'SpDef(' in Vin:
@@ -102,7 +104,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       try:
         Vin = int(Vin)
         #Cnew1 = ROOT.TCanvas("cnew1","cnew1",0,0,2000,600)
-        Def = GetDefects(inputfile[Vin],outdir,fitdir,canvas,bolVerb)
+        Def = GetDefects(inputfile[Vin],outdirs[Vin],fitdirs[Vin],canvas,bolVerb)
       except:
         print("NOT Correct format") 
     elif 'HnC(' in Vin:
@@ -110,7 +112,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       Vin = Vin.rstrip(')')
       Vin = Vin.split(',')
       #Cnew2 = ROOT.TCanvas("cnew2","cnew2",0,0,2000,1200)
-      F = HnCComp(inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,fitdir,canvas,bolVerb) 
+      F = HnCComp(inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],fitdirs[int(Vin[0])],canvas,bolVerb) 
 
     elif 'TDiff(' in Vin:
       Vin = Vin.lstrip('TDiff(')
@@ -122,7 +124,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       Cbot = ROOT.TCanvas("cbot","cbot",0,510,2000,490)
       if ninputs == 2:
         try:
-          F = PlotDiff(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,Ctop,Cbot,'temperature;1')
+          F = PlotDiff(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],Ctop,Cbot,'temperature;1')
         except:
           print("2 Inputs, NOT Correct format")
       elif ninputs == 3:
@@ -133,7 +135,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
           elif 'width' in Vin[2]: choice = options[2]
           elif 'chi2' in Vin[2]: choice = options[3]
           else: choice = options[0]
-          F = PlotDiff(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,Ctop,Cbot,choice)
+          F = PlotDiff(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],Ctop,Cbot,choice)
         except:
           print("3 Inputs NOT Correct format")
       elif ninputs == 4:
@@ -144,7 +146,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
           elif 'width' in Vin[2]: choice = options[2]
           elif 'chi2' in Vin[2]: choice = options[3]
           else: choice = options[0]
-          F = PlotDiff(int(Vin[3]),inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,Ctop,Cbot,choice)
+          F = PlotDiff(int(Vin[3]),inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],Ctop,Cbot,choice)
         except:
           print("4 Inputs NOT Correct format")
 
@@ -157,10 +159,10 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       Ctop = ROOT.TCanvas("ctop","ctop",0,0,2000,490)
       Cbot = ROOT.TCanvas("cbot","cbot",0,510,2000,490)
       if ninputs == 2:
-        #try:
-          F = PlotDiffScale(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,Ctop,Cbot,'temperature;1')
-        #except:
-         # print("2 Inputs, NOT Correct format")
+        try:
+          F = PlotDiffScale(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],Ctop,Cbot,'temperature;1')
+        except:
+         print("2 Inputs, NOT Correct format")
       elif ninputs == 3:
         try:
           options = ["temperature;1","mean;1","width;1","chi2;1"]
@@ -169,7 +171,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
           elif 'width' in Vin[2]: choice = options[2]
           elif 'chi2' in Vin[2]: choice = options[3]
           else: choice = options[0]
-          F = PlotDiffScale(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,Ctop,Cbot,choice)
+          F = PlotDiffScale(0,inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],Ctop,Cbot,choice)
         except:
           print("3 Inputs NOT Correct format")
       elif ninputs == 4:
@@ -180,7 +182,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
           elif 'width' in Vin[2]: choice = options[2]
           elif 'chi2' in Vin[2]: choice = options[3]
           else: choice = options[0]
-          F = PlotDiffScale(int(Vin[3]),inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,Ctop,Cbot,choice)
+          F = PlotDiffScale(int(Vin[3]),inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],Ctop,Cbot,choice)
         except:
           print("4 Inputs NOT Correct format")
     elif 'TDiffs(' in Vin:
@@ -194,7 +196,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       if ninputs == 3:
         for i in range(len(options)):
             
-          F = PlotDiff(int(Vin[2]),inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdir,Ctop,Cbot,options[i])          
+          F = PlotDiff(int(Vin[2]),inputfile[int(Vin[0])],inputfile[int(Vin[1])],outdirs[int(Vin[0])],Ctop,Cbot,options[i])          
       else:
         print("Not correct number of parameters")
     elif 'SpRMS(' in Vin:
@@ -205,7 +207,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       except:
         continue
       #CRMS = ROOT.TCanvas("crms","crms",0,0,2000,500)
-      F = GetBothRMS(inputfile[Vin],outdir,canvas)
+      F = GetBothRMS(inputfile[Vin],outdirs[Vin],canvas)
        
     elif 'OneLine(' in Vin:
       Vin = Vin.lstrip('OneLine(')
@@ -217,7 +219,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       except:
         continue
       COL = ROOT.TCanvas("canvas 1 line","canvas 1 line",0,0,2000,600)
-      OneLine(inputfile[Vin],outdir,COL,Length)
+      OneLine(inputfile[Vin],outdirs[Vin],COL,Length)
     elif 'OLDiff(' in Vin:
       Vin = Vin.lstrip('OneLineDiff(')
       Vin = Vin.rstrip(')')
@@ -232,7 +234,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       if len(VinList) > 3 and VinList[3] == 'S':
         Scale = True
       #CLDiff = ROOT.TCanvas("cline","cline",0,0,2000,700)
-      OneLineComp(inputfile[File1],inputfile[File2],outdir,canvas,Length,Scale)
+      OneLineComp(inputfile[File1],inputfile[File2],outdirs[File1],canvas,Length,Scale)
     elif 'OLDef(' in Vin:
       Vin = Vin.lstrip('OneLineDef(')
       Vin = Vin.rstrip(')')
@@ -240,7 +242,7 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
         File = int(Vin) 
       except:
         continue
-      Defs = GetOneLineDefects(inputfile[File],outdir,fitdir,canvas,bolVerb)
+      Defs = GetOneLineDefects(inputfile[File],outdirs[File],fitdirs[File],canvas,bolVerb)
     elif 'OLRMS(' in Vin:
       Vin = Vin.lstrip('OneLineRMS(')
       Vin = Vin.rstrip(')')
@@ -249,22 +251,25 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       except:
         continue
       #COLRMS = ROOT.TCanvas("clineRMS","clineRMS",0,0,800,800)
-      OneLineRMS(inputfile[File],outdir,canvas)
+      OneLineRMS(inputfile[File],outdirs[File],canvas)
     elif 'OLMulti(' in Vin:
-      Vin = Vin.lstrip('OneLineMulti(')
+      Vin = Vin.lstrip('OLMulti(')
       Vin = Vin.rstrip(')')
       VinList = Vin.split(',')
       try:
         Files = []
+        Outdirs=[]
         if Vin == 'a':
           Files = inputfile
+
         else:
           for i in VinList:
             Files = np.append(Files,inputfile[int(i)])
+            Outdirs = np.append(Outdirs,outdirs[int(i)])
       except:
         print("Wrong input variables")
         continue
-      OneLineMulti(Files,outdir,canvas)
+      OneLineMulti(Files,Outdirs,canvas)
 
     elif 'TempMean(' in Vin: 
       Vin = Vin.lstrip('TempMean(')
@@ -272,17 +277,21 @@ def TextCommands(inputfile,outdir,fitdir,canvas,bolVerb):
       VinList = Vin.split(',')
       try:
         Files = [] 
+        Outdirs = []
         if Vin == 'A':
           Files = inputfile
         else:
           for i in VinList:
             Files = np.append(Files,inputfile[int(i)])
+            Outdirs = np.append(Outdirs,outdirs[int(i)])
       except:
         print("Wrong input variables")
         continue 
       #CTM = ROOT.TCanvas("CTM","cTempMean",0,0,2000,2000)
+      counter = 0
       for fyle in Files:
-        FindTempHist(str(fyle),outdir,canvas)
+        FindTempHist(str(fyle),Outdirs[counter],canvas)
+        counter+=1
 
     elif 'FindAvgTemps' in Vin:
       #canvas = ROOT.TCanvas("genericCanvas")
@@ -316,29 +325,36 @@ def main():
       inputfile = np.append(inputfile,sys.argv[i])
     bolVerb = 0
 
-  #MAKING THE OUTDIRECTORY
-  outdir = "flawplots/"
-  fitdir = outdir+"fits/"
-  if not os.path.isdir( outdir ):
-    os.mkdir( outdir )
-  if not os.path.isdir( fitdir ):
-    os.mkdir( fitdir )
+  #MAKING THE OUTDIRECTORYs
+  outdirs=[]
+  fitdirs=[]
+  for fyle in inputfile:
+    basicName = fyle.split("/")[-1]
+    pathToFile = fyle.replace(basicName,"")
+    outdir = pathToFile + "flawplots/"
+    fitdir = outdir+"fits/"
+    if not os.path.isdir( outdir ):
+      os.mkdir( outdir )
+    if not os.path.isdir( fitdir ):
+      os.mkdir( fitdir )
+    outdirs.append(outdir)
+    fitdirs.append(fitdir)
 
   canvas = ROOT.TCanvas("main canvas","canvas",0,0,2000,600)
   canvas.SetGridx()
 
   #First Run
   if len(inputfile) == 1:
-    Def = GetDefects(inputfile[0],outdir,fitdir,canvas,bolVerb)
+    Def = GetDefects(inputfile[0],outdirs[0],fitdirs[0],canvas,bolVerb)
     if bolVerb > 0:
-      DefectAnalysis(Def,outdir,canvas)
+      DefectAnalysis(Def,outdirs[0],canvas)
   if len(inputfile) == 2:
-    Def = HnCComp(inputfile[0],inputfile[1],outdir,fitdir,canvas,bolVerb)
+    Def = HnCComp(inputfile[0],inputfile[1],outdirs[0],fitdirs[0],canvas,bolVerb)
   else:
-    OneLineMulti(inputfile,outdir,canvas)
+    OneLineMulti(inputfile,outdirs,canvas)
    
   #Wait for commands
-  TextCommands(inputfile,outdir,fitdir,canvas,bolVerb)
+  TextCommands(inputfile,outdirs,fitdirs,canvas,bolVerb)
 
 if __name__ == "__main__":
   main()
