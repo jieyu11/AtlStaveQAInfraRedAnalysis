@@ -129,10 +129,13 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
 
     
   except:
-    print("Failed to Find Long Lines")
+    print("Failed to Find Long Horizontal Lines. Using standard value for centered stave core")
+    lineData += [265]
+    lineData += [215]
 
 #------------------------------------------------------------------------------   
 #Find Short Vert Lines
+  StaveLength = 548.2 #13 module stave core length in pixels  
   try:
     findShortLines = cv2.HoughLinesP(image2,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = 10, maxLineGap = 5)
 
@@ -158,13 +161,78 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
         lineObj.Draw()
 
     VertData = np.sort(VertData)
+    VertData = np.unique(VertData)
     
     #Check to confine to a stave core #Updated April 18th 2019 to make better x position choices
-    StaveLength = 548.2 #13 module stave core length in pixels
     VertSep = np.amax(VertData)-np.amin(VertData)
-    if VertSep < StaveLength:
-      raise ValueError("Not all vertical lines were found!!!!")
-    while VertSep > StaveLength + StaveLength*0.01: #Finds the size of the stave core less than 5% its maximum 
+    skipConfining = False
+    if VertSep < StaveLength- StaveLength*0.05:
+      print("\n Unable to find all vertical lines around stave!!!! \n Trying to find best selection from found lines for the x position.\n")
+      minPoint = np.amin(VertData)
+      maxPoint = np.amax(VertData)
+
+      #Found a line at the EOS stave end
+      if minPoint + StaveLength < 640:
+        #Find the best 
+        while len(VertData) > 0:
+          #Remove outside possible
+          if maxPoint + StaveLength > 640:
+            VertData = np.delete(VertData,-1)
+            maxPoint = np.amax(VertData)
+          #Get best point
+          else:
+            bestPoint = 0
+            bestLineTemp = 0.0
+            for Point in VertData:
+              avgLineTemp=0.0
+              for i in range(int(Point),int(Point+StaveLength)):
+                avgLineTemp += abs(image[i][yPixels/2] - 20.)
+              if avgLineTemp > bestLineTemp:
+                bestPoint = Point
+                bestLineTemp = avgLineTemp
+            newX = bestPoint + int(StaveLength)
+            VertData=[bestPoint,newX] 
+            skipConfining = True
+            break
+
+      #Found a line at the stave end   
+      elif maxPoint - StaveLength > 0:   
+        #Find the best 
+        while len(VertData) > 0:
+          #Remove outside possible
+          if minPoint - StaveLength > 640-StaveLength:
+            VertData = np.delete(VertData,0)
+            minPoint = np.amin(VertData)
+          #Get best point
+          else:
+            bestPoint = 0
+            bestLineTemp = 0.0
+            for Point in VertData:
+              avgLineTemp=0.0
+              for i in range(int(Point-StaveLength),int(Point)):
+                avgLineTemp += abs(image[i][yPixels/2] - 20.)
+              if avgLineTemp > bestLineTemp:
+                bestPoint = Point
+                bestLineTemp = avgLineTemp
+            newX = int(bestPoint-StaveLength)
+            VertData=[newX,bestPoint]        
+            skipConfining = True
+            break
+
+      #Found something else
+      else:
+        print("\n Found No Usable lines.")
+
+    #Loop confining lines found on x to the stave. If this fails 
+    while VertSep > StaveLength + StaveLength*0.05: #Finds the size of the stave core less than 5% its maximum 
+      if skipConfining == True: break
+      if len( VertData) == 2:
+        VertSep = np.amax(VertData)-np.amin(VertData)
+        if VertSep < StaveLength + StaveLength*0.05 and VertSep > StaveLength - StaveLength*0.05: break
+        else:
+          print("Found poor separation of "+ str(VertSep))
+          raise("Crud")
+      print VertSep
       VertDataFrontRemoved = np.delete(VertData,0) 
       VertDataBackRemoved = np.delete(VertData,-1)
       VertSepFR = np.amax(VertDataFrontRemoved)-np.amin(VertDataFrontRemoved)     
@@ -178,30 +246,42 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
 
     lineData += [np.amax(VertData)]
     lineData += [np.amin(VertData)]
-    #Put the found area on the plot 
-    for i in range(2):
-      lineObj = ROOT.TLine(lineData[2],lineData[i],lineData[3],lineData[i])
-      lineObj2 = ROOT.TLine(lineData[i+2],lineData[0],lineData[i+2],lineData[1])
-      lineObj.SetLineColor(1)
-      lineObj2.SetLineColor(1)
-      lineObj.SetLineWidth(1)
-      lineObj2.SetLineWidth(1)
-      c2.lines += [lineObj]
-      lineObj.Draw()
-      c2.lines += [lineObj2]
-      lineObj2.Draw()
-
-    x0=lineData[3]
-    x1=lineData[2]
-    y0=lineData[1]
-    y1=lineData[0]
-    Dx = x1-x0 
-    Dy = y1-y0
-    
+   
   except:
-    print("Failed to find Short Vertical Lines")
-    
+    print("Failed to find Short Vertical Lines. Using different method assuming 13 module stave core length")
+    VertData = [i for i in range(int(xPixels-StaveLength))]
+    bestPoint = 0
+    bestLineTemp = 0.0
+    for Point in VertData:
+      avgLineTemp=0.0
+      for i in range(int(Point),int(Point+StaveLength)):
+        avgLineTemp += abs(image[i][yPixels/2] - 20.)
+      if avgLineTemp > bestLineTemp:
+        bestPoint = Point
+        bestLineTemp = avgLineTemp
+    newX = bestPoint + int(StaveLength)        
+    lineData+= [newX]
+    lineData+= [bestPoint]  
 #------------------------------------------------------------------------------
+  #Put the found area on the plot 
+  for i in range(2):
+    lineObj = ROOT.TLine(lineData[2],lineData[i],lineData[3],lineData[i])
+    lineObj2 = ROOT.TLine(lineData[i+2],lineData[0],lineData[i+2],lineData[1])
+    lineObj.SetLineColor(1)
+    lineObj2.SetLineColor(1)
+    lineObj.SetLineWidth(1)
+    lineObj2.SetLineWidth(1)
+    c2.lines += [lineObj]
+    lineObj.Draw()
+    c2.lines += [lineObj2]
+    lineObj2.Draw()
+
+  x0=lineData[3]
+  x1=lineData[2]
+  y0=lineData[1]
+  y1=lineData[0]
+  Dx = x1-x0 
+  Dy = y1-y0
  
   #Print all of the Fit Lines
   c2.Update()
@@ -299,7 +379,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
     intMaxStaveTemp = 50
     intMinStaveTemp = 25
     intMaxPipeTemp  = 50
-    intMinPipeTemp  = 40
+    intMinPipeTemp  = 25
 
   elif avgStaveTemp <15.:
     intLowTValue = 1
