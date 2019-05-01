@@ -110,7 +110,7 @@ class FrameAnalysis:
     "PipeTmin":     999., 
   }
 
-  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot") :
+  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot", bolFindConfig = True) :
     #
     # better run root on batch mode
     #
@@ -128,7 +128,11 @@ class FrameAnalysis:
     self._fit_outdir = self._fig_outdir + "/fit"
     if not os.path.isdir( self._fit_outdir ):
       os.mkdir( self._fit_outdir )
-  
+ 
+    if bolFindConfig == True:
+      print ("Usage: Finding frame configuration...")
+      cf.FindPoints( roo_name, cfg_name, fig_outdir)
+ 
     if not os.path.isfile( cfg_name ):
       print ("ERROR:<FRAMEANALYSIS::__INIT__> config file " + cfg_name + " not found.")
       raise Exception(" Config file error! ")
@@ -487,11 +491,7 @@ def main():
   elif (nargv >= 5) and bolFindConfig == False:
     str_outdir = sys.argv[4];
 
-  if bolFindConfig == True:
-    print ("Usage: Finding frame configuration...")
-    cf.FindPoints( str_inroo, str_cfg, str_outdir)
-
-  ist_frmana = FrameAnalysis( str_inroo, str_cfg, str_outdir )
+  ist_frmana = FrameAnalysis( str_inroo, str_cfg, str_outdir, bolFindConfig )
   ist_frmana.draw_frames()
   ist_frmana.find_pipes()
   print (' Make plots. Done!')
