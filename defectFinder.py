@@ -227,7 +227,10 @@ def TextCommands(inputfile,outdirs,fitdirs,canvas,bolVerb):
       try:
         File1 = int(VinList[0])
         File2 = int(VinList[1])
-        Length = float(VinList[2])
+        try:
+          Length = float(VinList[2])
+        except:
+          Length = 10.
       except:
         continue
       Scale = False

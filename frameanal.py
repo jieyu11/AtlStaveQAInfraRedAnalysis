@@ -137,10 +137,10 @@ class FrameAnalysis:
       print ("ERROR:<FRAMEANALYSIS::__INIT__> config file " + cfg_name + " not found.")
       raise Exception(" Config file error! ")
 
-    os.system('cp '+cfg_name+' '+fig_outdir+'/'+cfg_name)
-    frame_name = roo_name.split('/')[-1]
-    print(frame_name) 
-    os.system('cp '+roo_name+' '+fig_outdir+'/'+frame_name)
+    if bolFindConfig == True:
+      os.system('cp '+cfg_name+' '+fig_outdir+'/'+cfg_name)
+      frame_name = roo_name.split('/')[-1]
+      os.system('cp '+roo_name+' '+fig_outdir+'/'+frame_name)
 
     _f_cfg = open( cfg_name, 'r')
     for line in _f_cfg:
@@ -384,7 +384,7 @@ class FrameAnalysis:
         and the bottom 40% of the pixels for the bottom pipe curve.
     """
 
-    _roo_out = ROOT.TFile("plot/result.root", "recreate")
+    _roo_out = ROOT.TFile(self._fig_outdir+"/result.root", "recreate")
     h1s = [ ROOT.TH1F("top_pipe_temperature",  ";X in cm; Temperature (#circC)",  self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
             ROOT.TH1F("top_pipe_mean",         ";X in cm; Pipe position Y in cm", self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
             ROOT.TH1F("top_pipe_width",        ";X in cm; Pipe width Y in cm",    self._nxpixel_pipe, self._X0_pipe, self._X1_pipe),
@@ -473,19 +473,30 @@ def main():
     print_usage( argv0 )
     return
   elif ( sys.argv[1] == '-mc') or ( sys.argv[1] == '--manualconfig' ):
-    print ("Usage: Manual configuration overide. Will use config settings from old config_frame")
+    print ("Usage: Manual configuration overide. Will use config settings from config_frame in same dir as inputfile")
     bolFindConfig = False
     str_inroo = sys.argv[2];
   else:
     str_inroo = sys.argv[1];
 
-  str_cfg = "config_frame"
+  if bolFindConfig == False: #Looks for config_frame in same directory as root file and makes all output go into this folder
+    #get the directory
+    strInFile = str_inroo.split("/")[-1]
+    strInDir = str_inroo.replace("/"+strInFile,"")
+    str_cfg = strInDir + "/config_frame"
+    str_outdir = strInDir
+
+  else:
+    str_cfg = "config_frame"
+    str_outdir = "plot"
+
+  #Get user input config
   if (nargv >= 3) and bolFindConfig == True:
     str_cfg = sys.argv[2];
   elif (nargv >= 4) and bolFindConfig == False:
     str_cfg = sys.argv[3];
 
-  str_outdir = "plot"
+  #Get user input outdir
   if (nargv >= 4) and bolFindConfig == True:
     str_outdir = sys.argv[3];
   elif (nargv >= 5) and bolFindConfig == False:

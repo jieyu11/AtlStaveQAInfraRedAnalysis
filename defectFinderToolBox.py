@@ -499,8 +499,15 @@ def OneLineComp(inputfile0,inputfile1,outdir,canvas,bendLength = 1,Scale = False
   """
   ROOT.gStyle.SetOptStat(0)
   List = ROOT.TList()
-  Hist0 = OneLine(inputfile0,outdir,canvas,bendLength)
-  Hist1 = OneLine(inputfile1,outdir,canvas,bendLength)
+
+  #Get the length of each histogram
+  Length0 =120.- GetHistLength(inputfile0)
+  Length1 =120.- GetHistLength(inputfile1)
+  AugBendLength0 = bendLength + 2*Length0
+  AugBendLength1 = bendLength + 2*Length1
+
+  Hist0 = OneLine(inputfile0,outdir,canvas,AugBendLength0)
+  Hist1 = OneLine(inputfile1,outdir,canvas,AugBendLength1)
   canvas.Clear()
 
   Hist0info = GetHistInfo(Hist0)
@@ -679,6 +686,23 @@ def FindAvgTemps(inputfiles,outdir,canvas):
     outline = fyle+','+strData+'\n'
     outputFile.write(outline)
   outputFile.close
+
+
+def GetHistLength(inputfile):
+  """
+  This takes a single input histogram and produces a hist length
+  """
+  #Get histogram EOS info
+  histEOS = GetHistogram(inputfile,0)
+  InfoEOS = GetHistInfo(histEOS)
+  nbinsEOS = InfoEOS[0]
+  XminEOS = InfoEOS[1]
+  XmaxEOS = InfoEOS[2]
+  nPixels = XmaxEOS - XminEOS
+
+  return nPixels
+
+
  
 #---------------------------------------------------------------------
 def OneLineMulti(inputfiles,outdir,canvas,bendLength = 12):
@@ -699,8 +723,15 @@ def OneLineMulti(inputfiles,outdir,canvas,bendLength = 12):
   Hists.AddLast(Legend)
   name = ""
 
+  #Get the length of each histogram
+  HalfHistLengths = []
   for i in range(len(inputfiles)):
-    HistN = OneLine(inputfiles[i],outdir[i],canvas,bendLength)
+    Length = GetHistLength(inputfiles[i])
+    HalfHistLengths.append(120.-Length)
+
+  for i in range(len(inputfiles)):
+    AugBendLength = bendLength + 2*HalfHistLengths[i]
+    HistN = OneLine(inputfiles[i],outdir[i],canvas,AugBendLength)
     YMax = max(YMax,HistN.GetMaximum())
     YMin = min(YMin,HistN.GetMinimum())
     name += HistN.GetName()
