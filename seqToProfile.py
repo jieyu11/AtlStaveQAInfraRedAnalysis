@@ -31,6 +31,17 @@ def main():
   else:
     for i in range(1,nargv):
       inputfiles = np.append(inputfiles,sys.argv[i])
+  while True:
+    Vin = raw_input("\nIs the stave core a 13 or 14 module core? (13/14)")
+    if "13" in Vin:
+      bol14Mod = False
+      break
+    elif "14" in Vin:
+      bol14Mod = True
+      break
+    else:
+      print("\n Please provide either a 13 or 14")
+
   starttime = time.strftime('%a, %d %b %Y %H:%M:%S',time.localtime())
   print('Start Time: '+str(starttime))
   print(str(len(inputfiles))+' files will be converted...')
@@ -45,8 +56,11 @@ def main():
     print('  Current Time : '+str(ctime))
     #Read the sequence
     os.system('bash read_sequence.sh '+inputfiles[i]+' -e 0.92')
-    #Create the plot
-    os.system('./frameanal.py roo/frame_average.root')
+    #Create the plots
+    if bol14Mod == False:
+      os.system('./frameanal.py roo/frame_average.root')
+    else:
+      os.system('./frameanal.py roo/frame_average.root -14M')
     #Rename the outdir
     outfilename = inputfiles[i].split('.')[0]
     try:

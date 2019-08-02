@@ -110,7 +110,7 @@ class FrameAnalysis:
     "PipeTmin":     999., 
   }
 
-  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot", bolFindConfig = True) :
+  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot", bolFindConfig = True, bol14ModCore = False) :
     #
     # better run root on batch mode
     #
@@ -131,7 +131,7 @@ class FrameAnalysis:
  
     if bolFindConfig == True:
       print ("Usage: Finding frame configuration...")
-      cf.FindPoints( roo_name, cfg_name, fig_outdir)
+      cf.FindPoints( roo_name, cfg_name, fig_outdir, bol14ModCore)
  
     if not os.path.isfile( cfg_name ):
       print ("ERROR:<FRAMEANALYSIS::__INIT__> config file " + cfg_name + " not found.")
@@ -453,56 +453,70 @@ class FrameAnalysis:
     _roo_out.Close()
 
 def print_usage( s_function):
-  print ("Usage: " + s_function + " INPUT_ROOT_FILE [CONFIG=config_frame] [OUT_DIR=plot]")
+  print ("Usage: " + s_function + " INPUT_ROOT_FILE [CONFIG = config_frame] [OUTDIR = plot]")
+  print (" -mc : uses the config_frame file in the local directory of the inputroot file")
+  print (" -14M: searches for a 14 module stave core instead of a 13 module")
 
 def main():
   if sys.version_info[0] >= 3:
     print ("ERROR:<FRAMEANALYSIS::MAIN> PyROOT only works with Python 2.x. Code Tested with 2.7.10. Current version " + str(sys.version_info[0]) + ".x")
     raise Exception(" Python Version too high. Use 2.x. ")
 
-  nargv = len(sys.argv)
-
-  argv0 = str(sys.argv[0])
+  strInputCmds = sys.argv[1:]
+  if ("-h" in strInputCmds) or ("--help" in strInputCmds):
+    print_usage( str(sys.argv[0]))
+    return
 
   bolFindConfig = True
-  if (nargv <= 1): 
-    print ("ERROR:<FRAMEANALYSIS> Please provide: input root file. Missing! Return.")
-    print_usage( argv0 )
-    return
-  elif ( argv0 == '-h' ) or ( argv0 == '--help' ):
-    print_usage( argv0 )
-    return
-  elif ( sys.argv[1] == '-mc') or ( sys.argv[1] == '--manualconfig' ):
-    print ("Usage: Manual configuration overide. Will use config settings from config_frame in same dir as inputfile")
+  if ("-mc" in strInputCmds) or ("--manualconfig" in strInputCmds):
+    print ("Usage: Manual configuration override. Will use config settings from config_frame in same dir as inputfile")
     bolFindConfig = False
-    str_inroo = sys.argv[2];
-  else:
-    str_inroo = sys.argv[1];
+    while ("-mc" in strInputCmds):
+      strInputCmds.remove("-mc")
+    while ("--manualconfig" in strInputCmds):
+      strInputCmds.remove("--manualconfig")
 
+  bol14ModCore = False
+  if ("-14M" in strInputCmds) or ("--14modulecore" in strInputCmds):
+    print("Usage: Assuming 14 module stave core")
+    bol14ModCore = True
+    while ("-14M" in strInputCmds):
+      strInputCmds.remove("-14M")
+    while ("--14modulecore" in strInputCmds):
+      strInputCmds.remove("--14modulecore")
+  else:
+    print("Usage: Assuming 13 module stave core")
+
+  if len(strInputCmds) <= 0:
+    print ("ERROR:<FRAMEANALYSIS> Please provide: input root file. Missing! Return.")
+    print_usage( str(sys.argv[0]))
+    return
+  elif len(strInputCmds) == 1:
+    str_inroo = strInputCmds[0]
+    str_cfg = "config_frame"
+    str_outdir = "plot"
+  elif len(strInputCmds) == 2:
+    str_inroo = strInputCmds[0]
+    str_cfg = strInputCmds[1]
+    str_outdir = "plot"
+  elif len(strInputCmds) == 3:
+    str_inroo = strInputCmds[0]
+    str_cfg = strInputCmds[1]
+    str_outdir = strInputCmds[2]
+  else:
+    print ("ERROR:<FRAMEANALYSIS> Too many inputs! Return.")
+    print_usage( str(sys.argv[0]))
+    return
+     
   if bolFindConfig == False: #Looks for config_frame in same directory as root file and makes all output go into this folder
     #get the directory
     strInFile = str_inroo.split("/")[-1]
     strInDir = str_inroo.replace("/"+strInFile,"")
-    str_cfg = strInDir + "/config_frame"
-    str_outdir = strInDir
+    str_cfg = strInDir + "/" + str_cfg
+    if str_outdir == 'plot':
+      str_outdir = strInDir
 
-  else:
-    str_cfg = "config_frame"
-    str_outdir = "plot"
-
-  #Get user input config
-  if (nargv >= 3) and bolFindConfig == True:
-    str_cfg = sys.argv[2];
-  elif (nargv >= 4) and bolFindConfig == False:
-    str_cfg = sys.argv[3];
-
-  #Get user input outdir
-  if (nargv >= 4) and bolFindConfig == True:
-    str_outdir = sys.argv[3];
-  elif (nargv >= 5) and bolFindConfig == False:
-    str_outdir = sys.argv[4];
-
-  ist_frmana = FrameAnalysis( str_inroo, str_cfg, str_outdir, bolFindConfig )
+  ist_frmana = FrameAnalysis( str_inroo, str_cfg, str_outdir, bolFindConfig, bol14ModCore )
   ist_frmana.draw_frames()
   ist_frmana.find_pipes()
   print (' Make plots. Done!')

@@ -13,7 +13,7 @@ import numpy as np
 import cv2
 import ROOT
 
-def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,fltxPercentCutL=0.05,fltxPercentCutR=0.023,fltyPercentCut=0.20):
+def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 640,yPixels = 480,fltxPercentCutL=0.05,fltxPercentCutR=0.023,fltyPercentCut=0.20):
   """
   This function takes an input root stave image and finds all of the appropriate
   locations on the stave and creates a config file.
@@ -135,7 +135,12 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
 
 #------------------------------------------------------------------------------   
 #Find Short Vert Lines
-  StaveLength = 548.2 #13 module stave core length in pixels  
+  if bol14ModCore == False:
+    StaveLength = 548.2 #13 module stave core length in pixels
+    cutPercent= 0.05
+  else:
+    StaveLength = 580 #~14 module stave core length (This is approximated from a Yale thermal image from Rec-000110)
+    cutPercent= 0.02
   try:
     findShortLines = cv2.HoughLinesP(image2,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = 10, maxLineGap = 5)
 
@@ -166,7 +171,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
     #Check to confine to a stave core #Updated April 18th 2019 to make better x position choices
     VertSep = np.amax(VertData)-np.amin(VertData)
     skipConfining = False
-    if VertSep < StaveLength- StaveLength*0.05:
+    if VertSep < StaveLength- StaveLength*cutPercent:
       print("\n Unable to find all vertical lines around stave!!!! \n Trying to find best selection from found lines for the x position.\n")
       minPoint = np.amin(VertData)
       maxPoint = np.amax(VertData)
@@ -224,11 +229,11 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
         print("\n Found No Usable lines.")
 
     #Loop confining lines found on x to the stave. If this fails 
-    while VertSep > StaveLength + StaveLength*0.05: #Finds the size of the stave core less than 5% its maximum 
+    while VertSep > StaveLength + StaveLength*cutPercent: #Finds the size of the stave core less than 5% its maximum 
       if skipConfining == True: break
       if len( VertData) == 2:
         VertSep = np.amax(VertData)-np.amin(VertData)
-        if VertSep < StaveLength + StaveLength*0.05 and VertSep > StaveLength - StaveLength*0.05: break
+        if VertSep < StaveLength + StaveLength*cutPercent and VertSep > StaveLength - StaveLength*cutPercent: break
         else:
           print("Found poor separation of "+ str(VertSep))
           raise("Crud")
@@ -324,9 +329,6 @@ def FindPoints(strImageFile,strOutputFile,outdir,xPixels = 640,yPixels = 480,flt
   avgStaveTemp = avgStaveTemp/stavePixels
   avgAboveTemp = avgAboveTemp/EOSCardPixels
   avgBelowTemp = avgBelowTemp/EOSCardPixels
-
-  
-
 
   #Get Which Side from the Plot
   if avgStaveTemp > 20: 
