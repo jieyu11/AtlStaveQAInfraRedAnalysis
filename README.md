@@ -105,4 +105,6 @@
       the ones closest to the end of stave card (I Think).
     + This also requires scipy to work. It is another python package that you may not be standard.
 
++ Questions?
+  - Send an email to wheidorn@iastate.edu. I may be able to help.
 
