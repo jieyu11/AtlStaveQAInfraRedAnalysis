@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''
 configFinder.py
 
@@ -12,6 +14,7 @@ Requires: pyROOT, Python 2.7, OpenCV
 import numpy as np
 import cv2
 import ROOT
+
 
 def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 640,yPixels = 480,fltxPercentCutL=0.05,fltxPercentCutR=0.023,fltyPercentCut=0.20):
   """
