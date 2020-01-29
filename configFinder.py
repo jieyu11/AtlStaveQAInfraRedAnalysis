@@ -51,7 +51,13 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
         Tree.GetEntry(j*xPixels + i) #Reading from a single frame
         image[i][j] = _temperature[0] 
 
-
+  #QMUL: splitting the image
+  height = image.shape[1]
+  lower_img = image[:, 0:int(height/2)]
+  upper_img = image[:, int(height/2):height]
+  image = upper_img
+  yPixels = int(height/2)
+  #end of QMUL
 
   # Make The Canny Image
   v = np.median(image)

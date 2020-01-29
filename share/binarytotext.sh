@@ -60,7 +60,6 @@ for ffile in `ls -t $binaryfold/`; do
     #echo Time $Time >> config
   fi
 
-
   nameout=${ffile/fff/pgm}
 
 
@@ -71,10 +70,6 @@ for ffile in `ls -t $binaryfold/`; do
   # converting .fff to png
   #
   exiftool -b -RawThermalImage $binaryfold/$ffile | convert - -compress none $txtoutfold/$nameout
-
-  # QMUL version: 
-  python split.py $txtoutfold/$nameout
-  #End Of QMUL
   
   cat Time.txt > tmp
   cat $txtoutfold/$nameout >> tmp
