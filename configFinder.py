@@ -142,7 +142,8 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
     StaveLength = 548.2 #13 module stave core length in pixels
     cutPercent= 0.05
   else:
-    StaveLength = 580 #~14 module stave core length (This is approximated from a Yale thermal image from Rec-000110)
+    #StaveLength = 580 #~14 module stave core length (This is approximated from a Yale thermal image from Rec-000110)
+    StaveLength = 630 #~14 module stave for the QMUL IR set-up
     cutPercent= 0.02
   try:
     findShortLines = cv2.HoughLinesP(image2,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = 10, maxLineGap = 5)

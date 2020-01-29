@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 # @purpose:
 #   Read .seq files from Flir IR camera and write each frame to temporary binary file.
 #
@@ -21,6 +21,8 @@
 
 import sys
 import os
+import numpy as np
+import cv2
 
 #pat=b'\x46\x46\x46\x00\x52\x65\x73\x65\x61\x72\x63\x68\x49\x52';
 pat='\x46\x46\x46\x00\x52\x65\x73\x65\x61\x72\x63\x68\x49\x52'
