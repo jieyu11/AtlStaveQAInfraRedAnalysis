@@ -52,13 +52,14 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
         image[i][j] = _temperature[0] 
 
   #QMUL: splitting the image
+  
   height = image.shape[1]
   lower_img = image[:, 0:int(height/2)]
   upper_img = image[:, int(height/2):height]
-  image = upper_img
+  image = lower_img
   yPixels = int(height/2)
   #end of QMUL
-
+  
   # Make The Canny Image
   v = np.median(image)
 
@@ -123,15 +124,18 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
       c2.lines += [lineObj]
       lineObj.Draw()
 
-    HorData = np.sort(HorData) 
-    CentSep = np.amax(abs(HorData-240))
+    HorData = np.sort(HorData)
+    #CentreOfStaveY = 240
+    #QMUL: the staves are not in the middle, but at the bottom (or top)
+    CentreOfStaveY = 180
+    CentSep = np.amax(abs(HorData-CentreOfStaveY)) 
     while CentSep > 50:
       lenHor = np.size(HorData)
-      if abs(HorData[0]-240)> 50:
+      if abs(HorData[0]-CentreOfStaveY)> 50:
         HorData = np.delete(HorData,0)
       else:
         HorData = np.delete(HorData,lenHor-1)
-      CentSep = np.amax(abs(HorData-240))
+      CentSep = np.amax(abs(HorData-CentreOfStaveY))
 
     lineData += [np.amax(HorData)]
     lineData += [np.amin(HorData)]
@@ -150,7 +154,8 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
   else:
     #StaveLength = 580 #~14 module stave core length (This is approximated from a Yale thermal image from Rec-000110)
     StaveLength = 630 #~14 module stave for the QMUL IR set-up
-    cutPercent= 0.02
+    #cutPercent= 0.02
+    cutPercent = 0.20 # QMUL
   try:
     findShortLines = cv2.HoughLinesP(image2,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = 10, maxLineGap = 5)
 
