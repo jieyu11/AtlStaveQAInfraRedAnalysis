@@ -313,17 +313,38 @@ print("lower points: " + str(points_lower))
 
 
 img3 = (img - np.min(img))/(np.max(img)-np.min(img))*200 + 50
-cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=3)
+cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
 
-cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=3)
+cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
+
+number_of_modules = 14
+upper_stave_length = points_upper[2] - points_upper[0]
+upper_stave_width = points_upper[3] - points_upper[1]
+upper_module_length = upper_stave_length/(number_of_modules*1.0)  #need to convert to double to get rid of rounding error
+
+for i in range(1,number_of_modules+1):
+  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
+  if(i==1):
+    crop_img = img[points_upper[1]:(points_upper[1]+upper_stave_width/2),(points_upper[0]+int((i-1)*upper_module_length)):(points_upper[0]+int(i*upper_module_length))]
+
+lower_stave_length = points_lower[2] - points_lower[0]
+lower_stave_width = points_lower[3] - points_lower[1]
+lower_module_length = lower_stave_length/(number_of_modules*1.0) #need to convert to double to get rid of rounding error
 
 
+for i in range(1,number_of_modules+1):
+  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
-plt.imshow(upper_img)
-plt.show()
-plt.imshow(lower_img)
-plt.show()
+
+#plt.imshow(upper_img)
+#plt.show()
+#plt.imshow(lower_img)
+#plt.show()
 plt.imshow(img3)
+plt.show()
+plt.imshow(crop_img, cmap='hot', interpolation='nearest')
 plt.show()
 
 """ 

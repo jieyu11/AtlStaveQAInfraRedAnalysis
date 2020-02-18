@@ -95,7 +95,7 @@ class TextToRoot:
   """
 
   """
-  _parameters = { "R1": 0., "R2": 0., "B": 0., "O": 0., "F": 0., "Emissivity": 0.79, "ReflTemp": 20., "AtomTemp": 20., "Transmissivity": 1.}
+  _parameters = { "R1": 0., "R2": 0., "B": 0., "O": 0., "F": 0., "Emissivity": 0.79, "ReflTemp": 20., "AtomTemp": 20., "Transmissivity": 0.987}
   #Emissivity of the stave is 0.9, pipefoam is 0.79
   def __init__ (self, cfg_name = "config") :
     self._status = 0

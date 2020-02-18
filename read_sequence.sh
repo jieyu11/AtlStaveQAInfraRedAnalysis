@@ -47,6 +47,7 @@ fi
 ./share/texttoroot.py $outdir $nfile
 echo ''
 
+
 echo 'clear binary folder: '$binarydir''
 rm -rf $binarydir
 echo 'clear text out folder: '$txtoutdir''

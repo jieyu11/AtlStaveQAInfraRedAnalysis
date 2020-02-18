@@ -47,4 +47,4 @@ else:
             image[i][j] = _temperature[0]
             
 
-np.savetxt("image_from_raw.csv", image, delimiter=",")
+np.savetxt("A655-000277-312_16_15_05_892_RAW.csv", image, delimiter=",")
