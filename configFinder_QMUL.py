@@ -300,10 +300,12 @@ img = np.array(image)
 height = img.shape[0]
 width = img.shape[1]
 
+# split the image into two images
 upper_img = img[0:int(height/2), 0:width].transpose()
 lower_img = img[int(height/2):height, 0:width].transpose()
 
-
+#look for the edges in both (uppe and lower) part of the images
+#FindPoits function has to be given the approximate Y position of the stave core
 points_upper = FindPoints(upper_img,200)
 print("upper points: " + str(points_upper))
 
@@ -311,12 +313,14 @@ print("upper points: " + str(points_upper))
 points_lower = FindPoints(lower_img,40)
 print("lower points: " + str(points_lower))
 
-
+#drawing the rectangles on the IR image
 img3 = (img - np.min(img))/(np.max(img)-np.min(img))*200 + 50
 cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
 
 cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
+
+#drawing the modules regions
 number_of_modules = 14
 upper_stave_length = points_upper[2] - points_upper[0]
 upper_stave_width = points_upper[3] - points_upper[1]
