@@ -1,0 +1,5 @@
+#name	value 	comment
+Tin	60.0	temperature of the liquid flowing in
+Tout	55.0	temperature of the liquid at the end
+Cliq	4200	heat capacity of the liquid (water)
+Zcut	300	QC cut on the thermal impedance

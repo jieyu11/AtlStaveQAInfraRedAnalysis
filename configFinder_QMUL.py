@@ -304,6 +304,9 @@ width = img.shape[1]
 upper_img = img[0:int(height/2), 0:width].transpose()
 lower_img = img[int(height/2):height, 0:width].transpose()
 
+
+print("------------------------------------------------")
+
 #look for the edges in both (uppe and lower) part of the images
 #FindPoits function has to be given the approximate Y position of the stave core
 points_upper = FindPoints(upper_img,200)
@@ -313,24 +316,48 @@ print("upper points: " + str(points_upper))
 points_lower = FindPoints(lower_img,40)
 print("lower points: " + str(points_lower))
 
+
+print("------------------------------------------------")
+
 #drawing the rectangles on the IR image
-img3 = (img - np.min(img))/(np.max(img)-np.min(img))*200 + 50
+#img3 = (img - np.min(img))/(np.max(img)-np.min(img))*200 + 50
+img3 = img
 cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
 
 cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
 
-#drawing the modules regions
+#drawing the modules regions and calculating the average temperature
 number_of_modules = 14
 upper_stave_length = points_upper[2] - points_upper[0]
 upper_stave_width = points_upper[3] - points_upper[1]
 upper_module_length = upper_stave_length/(number_of_modules*1.0)  #need to convert to double to get rid of rounding error
+upper_stave_upper_temp = []
+upper_stave_lower_temp = []
+lower_stave_upper_temp = []
+lower_stave_lower_temp = []
 
 for i in range(1,number_of_modules+1):
   cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
   cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
-  if(i==1):
-    crop_img = img[points_upper[1]:(points_upper[1]+upper_stave_width/2),(points_upper[0]+int((i-1)*upper_module_length)):(points_upper[0]+int(i*upper_module_length))]
+
+  top_y = points_upper[1]
+  bottom_y = points_upper[1]+upper_stave_width/2
+  left_x = points_upper[0]+int((i-1)*upper_module_length)
+  right_x = points_upper[0]+int(i*upper_module_length)
+
+  #print("[" + str(left_x) + ", " + str(top_y) + "]" +  " ..... [" +  str(right_x) + ", " + str(bottom_y) + "]")
+  
+  crop_upper = img[top_y:bottom_y,left_x:right_x]
+  upper_stave_upper_temp.append(np.mean(crop_upper))
+  
+  top_y = points_upper[1]+upper_stave_width/2
+  bottom_y = points_upper[3]
+  left_x = points_upper[0]+int((i-1)*upper_module_length)
+  right_x = points_upper[0]+int(i*upper_module_length)
+
+  crop_lower = img[top_y:bottom_y,left_x:right_x]
+  upper_stave_lower_temp.append(np.mean(crop_lower))
 
 lower_stave_length = points_lower[2] - points_lower[0]
 lower_stave_width = points_lower[3] - points_lower[1]
@@ -341,6 +368,100 @@ for i in range(1,number_of_modules+1):
   cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
   cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
+  top_y = points_lower[1]+int(height/2)
+  bottom_y = points_lower[1]+lower_stave_width/2+int(height/2)
+  left_x = points_lower[0]+int((i-1)*lower_module_length)
+  right_x = points_lower[0]+int(i*lower_module_length)
+
+
+  
+  crop_upper = img[top_y:bottom_y,left_x:right_x]
+  lower_stave_upper_temp.append(np.mean(crop_upper))
+
+  top_y = points_lower[1]+lower_stave_width/2+int(height/2)
+  bottom_y = points_lower[3]+int(height/2)
+  left_x = points_lower[0]+int((i-1)*lower_module_length)
+  right_x = points_lower[0]+int(i*lower_module_length)
+
+  #print("[" + str(left_x) + ", " + str(top_y) + "]" +  " ..... [" +  str(right_x) + ", " + str(bottom_y) + "]")
+  crop_lower = img[top_y:bottom_y,left_x:right_x]
+  lower_stave_lower_temp.append(np.mean(crop_lower))
+
+
+print("------------------------------------------------")
+
+#importing data from data.dat
+filename = "data.dat"
+print("Importing variables from the data file " + filename + ":")
+names = []
+values = []
+f = open(filename, "r")
+for line in f:
+    if line[0] == "#" or line[0]=="\n":
+        continue
+    names.append(line.split("\t")[0])
+    values.append(float(line.split("\t")[1]))
+
+
+if(names == ["Tin", "Tout", "Cliq", "Zcut"]):
+    Tin = values[0]
+    Tout = values[1]
+    Cliq = values[2]
+    Zcut = values[3]
+else:
+    raise Exception('Corrupted data file.')
+
+#print all the imported variables
+for i in range(0,len(names)):
+  print(names[i] + "=" + str(values[i]))
+print("------------------------------------------------")
+
+# extrapolate the temperature of the cooling liquid
+# so far only for the first 14 modules
+
+Tliquid = Tin - ((Tin-Tout)/28.0)*np.linspace(0,28,29)
+
+heatCapacity = Cliq
+
+thermalImpedance_upperFace = []
+thermalImpedance_lowerFace = []
+
+
+for i in range(0,14):
+  # facor 0.5 for considering only one side
+  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5
+  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - upper_stave_upper_temp[i]
+  averageTempDiff_lowerFace  = (Tliquid[i] + Tliquid[i+1])/2 - lower_stave_upper_temp[i]
+  thermalImpedance_upperFace.append(heat/averageTempDiff_upperFace)
+  thermalImpedance_lowerFace.append(heat/averageTempDiff_lowerFace)
+
+for i in range(14,28):
+  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5
+  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - upper_stave_lower_temp[i-14]
+  averageTempDiff_lowerFace = (Tliquid[i] + Tliquid[i+1])/2 - lower_stave_lower_temp[i-14]
+  thermalImpedance_upperFace.append(heat/averageTempDiff_upperFace)
+  thermalImpedance_lowerFace.append(heat/averageTempDiff_lowerFace)
+
+"""
+print("Upper face:")
+print(thermalImpedance_upperFace)
+print("Lower face:")
+print(thermalImpedance_lowerFace)
+"""
+
+print("Upper Face:")
+print("# \t Impedance \t QA")
+for i in range(0,28):
+  print(str(i) + "\t" + "%0.3f" % thermalImpedance_upperFace[i] + "\t\t" + ("OK" if thermalImpedance_upperFace[i] <= Zcut else "FAIL"))
+
+print("-------------------------")
+
+print("Lower Face:")
+print("# \t Impedance \t QA")
+for i in range(0,28):
+  print(str(i) + "\t" + "%0.3f" % thermalImpedance_lowerFace[i] + "\t\t" + ("OK" if thermalImpedance_upperFace[i] <= Zcut else "FAIL"))
+
+
 
 #plt.imshow(upper_img)
 #plt.show()
@@ -348,9 +469,8 @@ for i in range(1,number_of_modules+1):
 #plt.show()
 plt.imshow(img3)
 plt.show()
-plt.imshow(crop_img, cmap='hot', interpolation='nearest')
-plt.show()
-
+#plt.imshow(crop_img, cmap='hot', interpolation='nearest')
+#plt.show()
 """ 
   #Print all of the Fit Lines
   c2.Update()

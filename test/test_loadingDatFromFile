@@ -1,0 +1,27 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Feb 25 16:56:57 2020
+
+@author: vozdecky
+"""
+
+#importing data from data.dat
+filename = "data.dat"
+print("Importing variables from the data file: " + filename)
+names = []
+values = []
+f = open(filename, "r")
+for line in f:
+    if line[0] == "#" or line[0]=="\n":
+        continue
+    names.append(line.split("\t")[0])
+    values.append(float(line.split("\t")[1]))
+
+
+if(names == ["Tin", "Tout", "Cliq"]):
+    Tin = values[0]
+    Tout = values[1]
+    Cliq = values[2]
+else:
+    raise Exception('Corrupted data file.')

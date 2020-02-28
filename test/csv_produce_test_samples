@@ -1,0 +1,32 @@
+#!/usr/bin/env python2
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Feb 27 16:50:49 2020
+
+@author: vozdecky
+"""
+
+import csv
+import numpy as np
+import cv2
+from matplotlib import pyplot as plt
+
+
+results = []
+with open("../CSV_with_0.92_emmy.csv") as csvfile:
+    reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC) # change contents to floats
+    for row in reader: # each row is a list
+        results.append(row)
+        
+#img = np.array(results) 
+
+for i in range(0,14):
+    img = np.array(results)    
+    img[300:320,(8+i*45):(3+(i+1)*45)] = -100
+    np.savetxt("test" + str(i) + ".csv", img, delimiter=",")
+
+
+#np.savetxt("test01.csv", img, delimiter=",")
+#plt.imshow(img, cmap='hot', interpolation='nearest')
+#plt.colorbar()
+#plt.show()
