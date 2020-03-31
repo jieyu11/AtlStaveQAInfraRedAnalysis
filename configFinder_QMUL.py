@@ -322,9 +322,9 @@ print("------------------------------------------------")
 #drawing the rectangles on the IR image
 #img3 = (img - np.min(img))/(np.max(img)-np.min(img))*200 + 50
 img3 = img
-cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
+#cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
 
-cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
+#cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
 
 #drawing the modules regions and calculating the average temperature
@@ -332,15 +332,37 @@ number_of_modules = 14
 upper_stave_length = points_upper[2] - points_upper[0]
 upper_stave_width = points_upper[3] - points_upper[1]
 upper_module_length = upper_stave_length/(number_of_modules*1.0)  #need to convert to double to get rid of rounding error
-upper_stave_upper_temp = []
-upper_stave_lower_temp = []
-lower_stave_upper_temp = []
-lower_stave_lower_temp = []
+
+topStave_largeUpperRegion_temp = []
+topStave_largeLowerRegion_temp = []
+bottomStave_largeUpperRegion_temp = []
+bottomStave_largeLowerRegion_temp = []
+
+topStave_smallUpperRegion_temp = []
+topStave_smallLowerRegion_temp = []
+bottomStave_smallUpperRegion_temp = []
+bottomStave_smallLowerRegion_temp = []
+
+
+
+
+#calculating number of pixels (vertically) for the small region
+pixelsSmallRegion = int((4/115)*upper_stave_width)
+
+if pixelsSmallRegion == 0:
+  pixelsSmallRegion=1
+
+print("TEST")
+print(pixelsSmallRegion)
+
 
 for i in range(1,number_of_modules+1):
-  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
-  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
+  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
+  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
 
+  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  
   top_y = points_upper[1]
   bottom_y = points_upper[1]+upper_stave_width/2
   left_x = points_upper[0]+int((i-1)*upper_module_length)
@@ -348,16 +370,41 @@ for i in range(1,number_of_modules+1):
 
   #print("[" + str(left_x) + ", " + str(top_y) + "]" +  " ..... [" +  str(right_x) + ", " + str(bottom_y) + "]")
   
-  crop_upper = img[top_y:bottom_y,left_x:right_x]
-  upper_stave_upper_temp.append(np.mean(crop_upper))
+  crop = img[top_y:bottom_y,left_x:right_x]
+  topStave_largeUpperRegion_temp.append(np.mean(crop))
+  
   
   top_y = points_upper[1]+upper_stave_width/2
   bottom_y = points_upper[3]
   left_x = points_upper[0]+int((i-1)*upper_module_length)
   right_x = points_upper[0]+int(i*upper_module_length)
 
-  crop_lower = img[top_y:bottom_y,left_x:right_x]
-  upper_stave_lower_temp.append(np.mean(crop_lower))
+  crop = img[top_y:bottom_y,left_x:right_x]
+  topStave_largeLowerRegion_temp.append(np.mean(crop))
+  
+  
+  
+  top_y = points_upper[1]+ int(0.2826*upper_stave_width)-pixelsSmallRegion
+  bottom_y = points_upper[1]+ int(0.2826*upper_stave_width)+pixelsSmallRegion
+  left_x = points_upper[0]+int((i-1)*upper_module_length)
+  right_x = points_upper[0]+int(i*upper_module_length)
+  
+  crop = img[top_y:bottom_y,left_x:right_x]
+  topStave_smallUpperRegion_temp.append(np.mean(crop))
+  
+  
+  top_y = points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)-pixelsSmallRegion
+  bottom_y = points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)+pixelsSmallRegion
+  left_x = points_upper[0]+int((i-1)*upper_module_length)
+  right_x = points_upper[0]+int(i*upper_module_length)
+  
+  crop = img[top_y:bottom_y,left_x:right_x]
+  topStave_smallLowerRegion_temp.append(np.mean(crop))
+
+
+print(topStave_smallUpperRegion_temp)
+print(topStave_smallLowerRegion_temp)
+
 
 lower_stave_length = points_lower[2] - points_lower[0]
 lower_stave_width = points_lower[3] - points_lower[1]
@@ -365,18 +412,20 @@ lower_module_length = lower_stave_length/(number_of_modules*1.0) #need to conver
 
 
 for i in range(1,number_of_modules+1):
-  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
-  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
+  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
+  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
+
+  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
 
   top_y = points_lower[1]+int(height/2)
   bottom_y = points_lower[1]+lower_stave_width/2+int(height/2)
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
-
-
   
-  crop_upper = img[top_y:bottom_y,left_x:right_x]
-  lower_stave_upper_temp.append(np.mean(crop_upper))
+  crop = img[top_y:bottom_y,left_x:right_x]
+  bottomStave_largeUpperRegion_temp.append(np.mean(crop))
+  
 
   top_y = points_lower[1]+lower_stave_width/2+int(height/2)
   bottom_y = points_lower[3]+int(height/2)
@@ -384,8 +433,27 @@ for i in range(1,number_of_modules+1):
   right_x = points_lower[0]+int(i*lower_module_length)
 
   #print("[" + str(left_x) + ", " + str(top_y) + "]" +  " ..... [" +  str(right_x) + ", " + str(bottom_y) + "]")
-  crop_lower = img[top_y:bottom_y,left_x:right_x]
-  lower_stave_lower_temp.append(np.mean(crop_lower))
+  crop = img[top_y:bottom_y,left_x:right_x]
+  bottomStave_largeLowerRegion_temp.append(np.mean(crop))
+  
+  top_y = points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)-pixelsSmallRegion
+  bottom_y = points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)+pixelsSmallRegion
+  left_x = points_lower[0]+int((i-1)*lower_module_length)
+  right_x = points_lower[0]+int(i*lower_module_length)
+  
+  crop = img[top_y:bottom_y,left_x:right_x]
+  bottomStave_smallUpperRegion_temp.append(np.mean(crop))
+  
+  
+  top_y = points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)-pixelsSmallRegion
+  bottom_y = points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)+pixelsSmallRegion
+  left_x = points_lower[0]+int((i-1)*lower_module_length)
+  right_x = points_lower[0]+int(i*lower_module_length)
+  
+  crop = img[top_y:bottom_y,left_x:right_x]
+  bottomStave_smallLowerRegion_temp.append(np.mean(crop))
+  
+  
 
 
 print("------------------------------------------------")
@@ -403,11 +471,12 @@ for line in f:
     values.append(float(line.split("\t")[1]))
 
 
-if(names == ["Tin", "Tout", "Cliq", "Zcut"]):
+if(names == ["Tin", "Tout", "Cliq", "Zcut", "FR"]):
     Tin = values[0]
     Tout = values[1]
     Cliq = values[2]
     Zcut = values[3]
+    FR = values[4] #flow rate in liters per minute
 else:
     raise Exception('Corrupted data file.')
 
@@ -416,50 +485,104 @@ for i in range(0,len(names)):
   print(names[i] + "=" + str(values[i]))
 print("------------------------------------------------")
 
-# extrapolate the temperature of the cooling liquid
-# so far only for the first 14 modules
+#temperature profile of the liquid comes from the finite element analysis of the stave
+temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1]
 
+
+#scale scale it up
+Tliquid = map(lambda x:x*((Tout-Tin)/temperatureProfile[-1]), temperatureProfile)
+
+#shift it to match Tin
+Tliquid = map(lambda x:x+(Tin-Tliquid[0]), Tliquid)
+
+
+#linear extrapolation of the temperature of the liquid
 Tliquid = Tin - ((Tin-Tout)/28.0)*np.linspace(0,28,29)
+
 
 heatCapacity = Cliq
 
-thermalImpedance_upperFace = []
-thermalImpedance_lowerFace = []
+thermalImpedance_topLargeRegion = []
+thermalImpedance_bottomLargeRegion = []
+thermalImpedance_topSmallRegion = []
+thermalImpedance_bottomSmallRegion = []
 
 
+flowRate_kgPerSec = FR/60
+
+
+#impedance for the large region
 for i in range(0,14):
   # facor 0.5 for considering only one side
-  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5
-  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - upper_stave_upper_temp[i]
-  averageTempDiff_lowerFace  = (Tliquid[i] + Tliquid[i+1])/2 - lower_stave_upper_temp[i]
-  thermalImpedance_upperFace.append(heat/averageTempDiff_upperFace)
-  thermalImpedance_lowerFace.append(heat/averageTempDiff_lowerFace)
+  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
+  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_largeUpperRegion_temp[i]
+  averageTempDiff_lowerFace  = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_largeUpperRegion_temp[i]
+  thermalImpedance_topLargeRegion.append(averageTempDiff_upperFace/heat)
+  thermalImpedance_bottomLargeRegion.append(averageTempDiff_lowerFace/heat)
 
 for i in range(14,28):
-  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5
-  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - upper_stave_lower_temp[i-14]
-  averageTempDiff_lowerFace = (Tliquid[i] + Tliquid[i+1])/2 - lower_stave_lower_temp[i-14]
-  thermalImpedance_upperFace.append(heat/averageTempDiff_upperFace)
-  thermalImpedance_lowerFace.append(heat/averageTempDiff_lowerFace)
+  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
+  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_largeLowerRegion_temp[i-14]
+  averageTempDiff_lowerFace = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_largeLowerRegion_temp[i-14]
+  thermalImpedance_topLargeRegion.append(averageTempDiff_upperFace/heat)
+  thermalImpedance_bottomLargeRegion.append(averageTempDiff_lowerFace/heat)
+  
+
+#impedance for the small region
+for i in range(0,14):
+  # facor 0.5 for considering only one side
+  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
+  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_smallUpperRegion_temp[i]
+  averageTempDiff_lowerFace  = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_smallUpperRegion_temp[i]
+  thermalImpedance_topSmallRegion.append(averageTempDiff_upperFace/heat)
+  thermalImpedance_bottomSmallRegion.append(averageTempDiff_lowerFace/heat)
+
+for i in range(14,28):
+  heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
+  averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_smallLowerRegion_temp[i-14]
+  averageTempDiff_lowerFace = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_smallLowerRegion_temp[i-14]
+  thermalImpedance_topSmallRegion.append(averageTempDiff_upperFace/heat)
+  thermalImpedance_bottomSmallRegion.append(averageTempDiff_lowerFace/heat)
+
+
+
 
 """
 print("Upper face:")
-print(thermalImpedance_upperFace)
+print(thermalImpedance_topLargeRegion)
 print("Lower face:")
-print(thermalImpedance_lowerFace)
+print(thermalImpedance_bottomLargeRegion)
 """
 
-print("Upper Face:")
+print("Large region, Upper Face:")
 print("# \t Impedance \t QA")
 for i in range(0,28):
-  print(str(i) + "\t" + "%0.3f" % thermalImpedance_upperFace[i] + "\t\t" + ("OK" if thermalImpedance_upperFace[i] <= Zcut else "FAIL"))
+  print(str(i) + "\t" + "%0.3f" % thermalImpedance_topLargeRegion[i] + "\t\t" + ("OK" if thermalImpedance_topLargeRegion[i] <= Zcut else "FAIL"))
 
 print("-------------------------")
 
-print("Lower Face:")
+print("Large region, Lower Face:")
 print("# \t Impedance \t QA")
 for i in range(0,28):
-  print(str(i) + "\t" + "%0.3f" % thermalImpedance_lowerFace[i] + "\t\t" + ("OK" if thermalImpedance_upperFace[i] <= Zcut else "FAIL"))
+  print(str(i) + "\t" + "%0.3f" % thermalImpedance_bottomLargeRegion[i] + "\t\t" + ("OK" if thermalImpedance_bottomLargeRegion[i] <= Zcut else "FAIL"))
+
+
+print("-------------------------")
+print("-------------------------")
+print("-------------------------")
+
+print("Small region, Upper Face:")
+print("# \t Impedance \t QA")
+for i in range(0,28):
+  print(str(i) + "\t" + "%0.3f" % thermalImpedance_topSmallRegion[i] + "\t\t" + ("OK" if thermalImpedance_topSmallRegion[i] <= Zcut else "FAIL"))
+
+print("-------------------------")
+
+
+print("Small region, Lower Face:")
+print("# \t Impedance \t QA")
+for i in range(0,28):
+  print(str(i) + "\t" + "%0.3f" % thermalImpedance_bottomSmallRegion[i] + "\t\t" + ("OK" if thermalImpedance_bottomSmallRegion[i] <= Zcut else "FAIL"))
 
 
 

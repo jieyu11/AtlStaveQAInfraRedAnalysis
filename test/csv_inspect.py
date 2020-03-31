@@ -28,6 +28,6 @@ with open("A655-000277-312_16_15_05_892_RAW.csv") as csvfile:
 #images must be shifted as they are offset
 diff = abs(np.array(results) - np.rot90(np.array(results2)))
 ratio = np.array(results) / np.rot90(np.array(results2))
-plt.imshow(diff, cmap='hot', interpolation='nearest')
+plt.imshow(results, cmap='hot', interpolation='nearest')
 plt.colorbar()
 plt.show()
