@@ -344,16 +344,11 @@ bottomStave_smallUpperRegion_temp = []
 bottomStave_smallLowerRegion_temp = []
 
 
-
-
 #calculating number of pixels (vertically) for the small region
 pixelsSmallRegion = int((4/115)*upper_stave_width)
 
 if pixelsSmallRegion == 0:
   pixelsSmallRegion=1
-
-print("TEST")
-print(pixelsSmallRegion)
 
 
 for i in range(1,number_of_modules+1):
@@ -400,10 +395,6 @@ for i in range(1,number_of_modules+1):
   
   crop = img[top_y:bottom_y,left_x:right_x]
   topStave_smallLowerRegion_temp.append(np.mean(crop))
-
-
-print(topStave_smallUpperRegion_temp)
-print(topStave_smallLowerRegion_temp)
 
 
 lower_stave_length = points_lower[2] - points_lower[0]
@@ -495,10 +486,10 @@ Tliquid = map(lambda x:x*((Tout-Tin)/temperatureProfile[-1]), temperatureProfile
 #shift it to match Tin
 Tliquid = map(lambda x:x+(Tin-Tliquid[0]), Tliquid)
 
-
+"""
 #linear extrapolation of the temperature of the liquid
 Tliquid = Tin - ((Tin-Tout)/28.0)*np.linspace(0,28,29)
-
+"""
 
 heatCapacity = Cliq
 
@@ -584,7 +575,19 @@ print("# \t Impedance \t QA")
 for i in range(0,28):
   print(str(i) + "\t" + "%0.3f" % thermalImpedance_bottomSmallRegion[i] + "\t\t" + ("OK" if thermalImpedance_bottomSmallRegion[i] <= Zcut else "FAIL"))
 
-
+print("-------------------------")
+print("-------------------------")
+print("-------------------------")
+print("topStave_smallUpperRegion_temp = " + str(topStave_smallUpperRegion_temp))
+print("-------------------------")
+print("topStave_smallLowerRegion_temp = " + str(topStave_smallLowerRegion_temp))
+print("-------------------------")
+print("bottomStave_smallUpperRegion_temp = " + str(bottomStave_smallUpperRegion_temp))
+print("-------------------------")
+print("bottomStave_smallLowerRegion_temp = " + str(bottomStave_smallLowerRegion_temp))
+print("-------------------------")
+print("Tliquid = " + str(Tliquid))
+print("-------------------------")
 
 #plt.imshow(upper_img)
 #plt.show()
