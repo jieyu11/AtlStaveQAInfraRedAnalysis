@@ -1,6 +1,0 @@
-#name	value 	comment
-Tin	39.8	temperature of the liquid flowing in
-Tout	39.2	temperature of the liquid at the end
-Cliq	4200	heat capacity of the liquid (water)
-Zcut	8	QC cut on the thermal impedance
-FR	1.1	Flow rate in leters per minute

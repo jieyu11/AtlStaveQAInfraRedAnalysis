@@ -16,6 +16,7 @@ import cv2
 import ROOT
 import csv
 import sys
+import configparser
 from matplotlib import pyplot as plt
 
 def FindPoints(image, aproxYpos):
@@ -286,11 +287,11 @@ if len(sys.argv) <= 1:
   print("Missing argument. First argument should be a .csv file")
   quit()
 
-filename =  sys.argv[1]
+inputFile =  sys.argv[1]
 
 #upload the CSV file 
 image = []
-with open(filename) as csvfile:
+with open(inputFile) as csvfile:
   reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
   for row in reader:
     image.append(row)
@@ -445,38 +446,27 @@ for i in range(1,number_of_modules+1):
   
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_smallLowerRegion_temp.append(np.mean(crop))
-  
-  
-
+ 
 
 print("------------------------------------------------")
 
-#importing data from data.dat
-filename = "data.dat"
-print("Importing variables from the data file " + filename + ":")
-names = []
-values = []
-f = open(filename, "r")
-for line in f:
-    if line[0] == "#" or line[0]=="\n":
-        continue
-    names.append(line.split("\t")[0])
-    values.append(float(line.split("\t")[1]))
+#importing data from parameters.cfg
+filename = "parameters.cfg"
+print("Importing variables from config file " + filename + ":")
+config = configparser.ConfigParser()
+config.read(filename)
 
+Tin = float(config["Default"]["temp_in"])
+Tout = float(config["Default"]["temp_out"])
+Cliq = float(config["Default"]["c_liquid"])
+Zcut = float(config["Default"]["z_cut"])
+FR = float(config["Default"]["flow_rate"])
 
-if(names == ["Tin", "Tout", "Cliq", "Zcut", "FR"]):
-    Tin = values[0]
-    Tout = values[1]
-    Cliq = values[2]
-    Zcut = values[3]
-    FR = values[4] #flow rate in liters per minute
-else:
-    raise Exception('Corrupted data file.')
-
-#print all the imported variables
-for i in range(0,len(names)):
-  print(names[i] + "=" + str(values[i]))
+#print the imported variables
+for variable in config.items("Default"):
+  print(variable[0] + " = " + variable[1]) 
 print("------------------------------------------------")
+
 
 #temperature profile of the liquid comes from the finite element analysis of the stave
 temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1]

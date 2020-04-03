@@ -1,13 +1,18 @@
 #!/usr/bin/env python
+import configparser
 
-import os
-os.system("$PATH")
+config = configparser.ConfigParser()
 
-import numpy as np
-import cv2
-import ROOT
+config.read("parameters.cfg")
 
-print(cv2.__version__)
+Tin = config["Default"]["Tin"]
+Tout = config["Default"]["Tout"]
+Cliq = config["Default"]["Cliq"]
+Zcut = config["Default"]["Zcut"]
+FR = config["Default"]["FR"]
 
-import sys
-print(sys.version)
+#print(config.items("Default"))
+
+for variable in config.items("Default"):
+  print(variable[0] + " = " + variable[1]) 
+
