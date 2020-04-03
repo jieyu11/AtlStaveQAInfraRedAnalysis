@@ -3,9 +3,9 @@
 '''
 configFinder.py
 
-Author: William Heidorn, Iowa State University
-About: This program takes a thermal image of an ATLAS Itk Stave Support, and
-  finds the stave and produces 4 points that contain the stave
+Authors: William Heidorn (Iowa State University), Lubos Vozdecky (Queen Mary, University of London)
+About: This program takes a thermal image of an ATLAS Itk Stave Support in CSV format,
+  finds the stave and computes the impedances using data of the cooling fluid parameters in data.dat file.
 
 Requires: pyROOT, Python 2.7, OpenCV
 
@@ -344,11 +344,13 @@ bottomStave_smallUpperRegion_temp = []
 bottomStave_smallLowerRegion_temp = []
 
 
-#calculating number of pixels (vertically) for the small region
-pixelsSmallRegion = int((4/115)*upper_stave_width)
+#calculating number of pixels (vertically) for the small region (8.0mm wide)
+pixelsSmallRegion = int(round((4.0*upper_stave_width)/115))
 
 if pixelsSmallRegion == 0:
   pixelsSmallRegion=1
+
+
 
 
 for i in range(1,number_of_modules+1):
@@ -507,14 +509,16 @@ for i in range(0,14):
   # facor 0.5 for considering only one side
   heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
   averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_largeUpperRegion_temp[i]
-  averageTempDiff_lowerFace  = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_largeUpperRegion_temp[i]
+  #flow of cooling liquid is flipped for the bottom face as the thermal image is flipped => use (27-i) instead of i
+  averageTempDiff_lowerFace  = (Tliquid[(27-i)] + Tliquid[(27-i)+1])/2 - bottomStave_largeUpperRegion_temp[i]
   thermalImpedance_topLargeRegion.append(averageTempDiff_upperFace/heat)
   thermalImpedance_bottomLargeRegion.append(averageTempDiff_lowerFace/heat)
 
 for i in range(14,28):
   heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
   averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_largeLowerRegion_temp[i-14]
-  averageTempDiff_lowerFace = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_largeLowerRegion_temp[i-14]
+  #flow of cooling liquid is flipped for the bottom face as the thermal image is flipped => use (27-i) instead of i
+  averageTempDiff_lowerFace = (Tliquid[(27-i)] + Tliquid[(27-i)+1])/2 - bottomStave_largeLowerRegion_temp[i-14]
   thermalImpedance_topLargeRegion.append(averageTempDiff_upperFace/heat)
   thermalImpedance_bottomLargeRegion.append(averageTempDiff_lowerFace/heat)
   
@@ -524,14 +528,16 @@ for i in range(0,14):
   # facor 0.5 for considering only one side
   heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
   averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_smallUpperRegion_temp[i]
-  averageTempDiff_lowerFace  = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_smallUpperRegion_temp[i]
+  #flow of cooling liquid is flipped for the bottom face as the thermal image is flipped => use (27-i) instead of i
+  averageTempDiff_lowerFace  = (Tliquid[(27-i)] + Tliquid[(27-i)+1])/2 - bottomStave_smallUpperRegion_temp[i]
   thermalImpedance_topSmallRegion.append(averageTempDiff_upperFace/heat)
   thermalImpedance_bottomSmallRegion.append(averageTempDiff_lowerFace/heat)
 
 for i in range(14,28):
   heat = (Tliquid[i] - Tliquid[i+1])*heatCapacity*0.5*flowRate_kgPerSec
   averageTempDiff_upperFace  = (Tliquid[i] + Tliquid[i+1])/2 - topStave_smallLowerRegion_temp[i-14]
-  averageTempDiff_lowerFace = (Tliquid[i] + Tliquid[i+1])/2 - bottomStave_smallLowerRegion_temp[i-14]
+  #flow of cooling liquid is flipped for the bottom face as the thermal image is flipped => use (27-i) instead of i
+  averageTempDiff_lowerFace = (Tliquid[(27-i)] + Tliquid[(27-i)+1])/2 - bottomStave_smallLowerRegion_temp[i-14]
   thermalImpedance_topSmallRegion.append(averageTempDiff_upperFace/heat)
   thermalImpedance_bottomSmallRegion.append(averageTempDiff_lowerFace/heat)
 
@@ -593,10 +599,23 @@ print("-------------------------")
 #plt.show()
 #plt.imshow(lower_img)
 #plt.show()
-plt.imshow(img3)
-plt.show()
+
+#plt.imshow(img3)
+#plt.show()
+
+
 #plt.imshow(crop_img, cmap='hot', interpolation='nearest')
 #plt.show()
+
+outputFilename = "output.csv"
+print("Outputing data into a file: " + outputFilename)
+with open(outputFilename, "w+") as f:
+  f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion \n")
+  for i in range(0,28):
+    f.write(str(i)+", "+str(thermalImpedance_topLargeRegion[i])+", "+str(thermalImpedance_bottomLargeRegion[i])+", "+str(thermalImpedance_topSmallRegion[i])+", "+str(thermalImpedance_bottomSmallRegion[i]) + "\n")
+
+f.close()
+
 """ 
   #Print all of the Fit Lines
   c2.Update()
