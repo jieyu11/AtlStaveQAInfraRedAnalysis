@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 '''
-configFinder.py
+impedanceFromCSV.py
 
-Authors: William Heidorn (Iowa State University), Lubos Vozdecky (Queen Mary, University of London)
+Authors: Lubos Vozdecky (Queen Mary, University of London)
 About: This program takes a thermal image of an ATLAS Itk Stave Support in CSV format,
-  finds the stave and computes the impedances using data of the cooling fluid parameters in data.dat file.
+  finds the stave and computes the thermal impedances using data of the cooling fluid saved in parameters.cfg.
+  The program outputs the result impedances into the /data folder as a CSV file.
 
 Requires: pyROOT, Python 2.7, OpenCV
 
@@ -289,6 +290,13 @@ if len(sys.argv) <= 1:
 
 inputFile =  sys.argv[1]
 
+#check if the suffix is .csv
+
+if inputFile[-3:] != "csv":
+  print("The input file should be a .csv file")
+  quit()
+
+
 #upload the CSV file 
 image = []
 with open(inputFile) as csvfile:
@@ -321,10 +329,11 @@ print("lower points: " + str(points_lower))
 print("------------------------------------------------")
 
 #drawing the rectangles on the IR image
-#img3 = (img - np.min(img))/(np.max(img)-np.min(img))*200 + 50
-img3 = img
-#cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
+#deep copy of the image to draw on the image without affecting the original one that is used to compute the temperatures
+img3 = np.copy(img)
 
+
+#cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
 #cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
 
@@ -358,8 +367,8 @@ for i in range(1,number_of_modules+1):
   #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
   #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
 
-  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
-  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
   
   top_y = points_upper[1]
   bottom_y = points_upper[1]+upper_stave_width/2
@@ -409,8 +418,8 @@ for i in range(1,number_of_modules+1):
   #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
   #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
-  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
-  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
 
   top_y = points_lower[1]+int(height/2)
   bottom_y = points_lower[1]+lower_stave_width/2+int(height/2)
@@ -541,6 +550,7 @@ print("Lower face:")
 print(thermalImpedance_bottomLargeRegion)
 """
 
+"""
 print("Large region, Upper Face:")
 print("# \t Impedance \t QA")
 for i in range(0,28):
@@ -584,20 +594,22 @@ print("bottomStave_smallLowerRegion_temp = " + str(bottomStave_smallLowerRegion_
 print("-------------------------")
 print("Tliquid = " + str(Tliquid))
 print("-------------------------")
+"""
+
 
 #plt.imshow(upper_img)
 #plt.show()
 #plt.imshow(lower_img)
 #plt.show()
 
-#plt.imshow(img3)
-#plt.show()
+plt.imshow(img3)
+plt.show()
 
 
 #plt.imshow(crop_img, cmap='hot', interpolation='nearest')
 #plt.show()
 
-outputFilename = "output.csv"
+outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES.csv"
 print("Outputing data into a file: " + outputFilename)
 with open(outputFilename, "w+") as f:
   f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion \n")
