@@ -343,6 +343,10 @@ upper_stave_length = points_upper[2] - points_upper[0]
 upper_stave_width = points_upper[3] - points_upper[1]
 upper_module_length = upper_stave_length/(number_of_modules*1.0)  #need to convert to double to get rid of rounding error
 
+lower_stave_length = points_lower[2] - points_lower[0]
+lower_stave_width = points_lower[3] - points_lower[1]
+lower_module_length = lower_stave_length/(number_of_modules*1.0) #need to convert to double to get rid of rounding error
+
 topStave_largeUpperRegion_temp = []
 topStave_largeLowerRegion_temp = []
 bottomStave_largeUpperRegion_temp = []
@@ -360,15 +364,65 @@ pixelsSmallRegion = int(round((4.0*upper_stave_width)/115))
 if pixelsSmallRegion == 0:
   pixelsSmallRegion=1
 
+##############
+#find horizontal line with the highest temperature to be used for the small regions
+left_edge = points_upper[0]
+right_edge = points_upper[3]
+
+#offsets are y-coordinates with the highest temperatures
+offsets_topStave_upperSmall = []
+offsets_topStave_lowerSmall = []
+offsets_bottomStave_upperSmall = []
+offsets_bottomStave_lowerSmall = []
+
+for i in range(1,number_of_modules+1):
+  temp_profile = np.mean(img[points_upper[1]:int(points_upper[1]+0.5*upper_stave_width),(left_edge+int((i-1)*upper_module_length)):(left_edge+int(i*upper_module_length))],axis=1)
+  offsets_topStave_upperSmall.append(points_upper[1]+np.argmax(temp_profile))
+  #plt.plot(temp_profile)
+
+#print(offsets_topStave_upperSmall)
+#print(points_upper[1]+ int(0.2826*upper_stave_width))
+#plt.show()
+
+for i in range(1,number_of_modules+1):
+  temp_profile = np.mean(img[int(points_upper[1]+0.5*upper_stave_width):points_upper[3],(left_edge+int((i-1)*upper_module_length)):(left_edge+int(i*upper_module_length))],axis=1)
+  offsets_topStave_lowerSmall.append(int(points_upper[1]+0.5*upper_stave_width)+np.argmax(temp_profile))
+  #plt.plot(temp_profile)
+
+#print(offsets_topStave_lowerSmall)
+#print(points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width))
+#plt.show()
+
+left_edge = points_lower[0]
+right_edge = points_lower[3]
+
+for i in range(1,number_of_modules+1):
+  temp_profile = np.mean(img[(int(height/2)+points_lower[1]):int(height/2+points_lower[1]+0.5*lower_stave_width),(left_edge+int((i-1)*lower_module_length)):(left_edge+int(i*lower_module_length))],axis=1)
+  offsets_bottomStave_upperSmall.append(points_lower[1]+np.argmax(temp_profile)+int(height/2))
+  #plt.plot(temp_profile)
+
+#print(offsets_bottomStave_upperSmall)
+#print(points_lower[1]+ int(0.2826*lower_stave_width+height/2))
+#plt.show()
+
+for i in range(1,number_of_modules+1):
+  temp_profile = np.mean(img[int(points_lower[1]+0.5*lower_stave_width+height/2):int(points_lower[3]+height/2),(left_edge+int((i-1)*lower_module_length)):(left_edge+int(i*lower_module_length))],axis=1)
+  offsets_bottomStave_lowerSmall.append(int(points_lower[1]+0.5*lower_stave_width+height/2)+np.argmax(temp_profile))
+  plt.plot(temp_profile)
+
+#print(offsets_bottomStave_lowerSmall)
+#print(points_lower[1]+ int(lower_stave_width/2+0.2826*lower_stave_width+height/2))
+#plt.show()
 
 
 
+#for the upper stave (as shown in the CSV file)
 for i in range(1,number_of_modules+1):
   #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
   #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
 
-  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
-  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),offsets_topStave_upperSmall[i-1]-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),offsets_topStave_upperSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),offsets_topStave_lowerSmall[i-1]-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),offsets_topStave_lowerSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
   
   top_y = points_upper[1]
   bottom_y = points_upper[1]+upper_stave_width/2
@@ -389,10 +443,8 @@ for i in range(1,number_of_modules+1):
   crop = img[top_y:bottom_y,left_x:right_x]
   topStave_largeLowerRegion_temp.append(np.mean(crop))
   
-  
-  
-  top_y = points_upper[1]+ int(0.2826*upper_stave_width)-pixelsSmallRegion
-  bottom_y = points_upper[1]+ int(0.2826*upper_stave_width)+pixelsSmallRegion
+  top_y = offsets_topStave_upperSmall[i-1]-pixelsSmallRegion
+  bottom_y = offsets_topStave_upperSmall[i-1]+pixelsSmallRegion
   left_x = points_upper[0]+int((i-1)*upper_module_length)
   right_x = points_upper[0]+int(i*upper_module_length)
   
@@ -400,8 +452,8 @@ for i in range(1,number_of_modules+1):
   topStave_smallUpperRegion_temp.append(np.mean(crop))
   
   
-  top_y = points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)-pixelsSmallRegion
-  bottom_y = points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)+pixelsSmallRegion
+  top_y = offsets_topStave_lowerSmall[i-1]-pixelsSmallRegion
+  bottom_y = offsets_topStave_lowerSmall[i-1]+pixelsSmallRegion
   left_x = points_upper[0]+int((i-1)*upper_module_length)
   right_x = points_upper[0]+int(i*upper_module_length)
   
@@ -409,17 +461,15 @@ for i in range(1,number_of_modules+1):
   topStave_smallLowerRegion_temp.append(np.mean(crop))
 
 
-lower_stave_length = points_lower[2] - points_lower[0]
-lower_stave_width = points_lower[3] - points_lower[1]
-lower_module_length = lower_stave_length/(number_of_modules*1.0) #need to convert to double to get rid of rounding error
-
-
+#loop for the lower stave (as shown in the CSV file)
 for i in range(1,number_of_modules+1):
+  #show the large regions
   #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
   #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
-  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
-  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)+pixelsSmallRegion),(0,0,0),thickness=1)
+  #show the small regions
+  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),offsets_bottomStave_upperSmall[i-1]-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),offsets_bottomStave_upperSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
+  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),offsets_bottomStave_lowerSmall[i-1]-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),offsets_bottomStave_lowerSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
 
   top_y = points_lower[1]+int(height/2)
   bottom_y = points_lower[1]+lower_stave_width/2+int(height/2)
@@ -429,27 +479,30 @@ for i in range(1,number_of_modules+1):
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_largeUpperRegion_temp.append(np.mean(crop))
   
-
+  #defining the large region
   top_y = points_lower[1]+lower_stave_width/2+int(height/2)
   bottom_y = points_lower[3]+int(height/2)
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
 
   #print("[" + str(left_x) + ", " + str(top_y) + "]" +  " ..... [" +  str(right_x) + ", " + str(bottom_y) + "]")
+  #calculating the temperature for the large region and saving it
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_largeLowerRegion_temp.append(np.mean(crop))
   
-  top_y = points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)-pixelsSmallRegion
-  bottom_y = points_lower[1]+int(height/2)+int(0.2826*lower_stave_width)+pixelsSmallRegion
+  #defining the small region
+  top_y = offsets_bottomStave_upperSmall[i-1]-pixelsSmallRegion
+  bottom_y = offsets_bottomStave_upperSmall[i-1]+pixelsSmallRegion
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
   
+  #calculating the temperature from the small region and saving it
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_smallUpperRegion_temp.append(np.mean(crop))
   
   
-  top_y = points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)-pixelsSmallRegion
-  bottom_y = points_lower[1]+int(height/2)+lower_stave_width/2+int(0.2826*lower_stave_width)+pixelsSmallRegion
+  top_y = offsets_bottomStave_lowerSmall[i-1]-pixelsSmallRegion
+  bottom_y = offsets_bottomStave_lowerSmall[i-1]+pixelsSmallRegion
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
   
