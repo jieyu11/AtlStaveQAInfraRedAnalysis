@@ -408,7 +408,7 @@ for i in range(1,number_of_modules+1):
 for i in range(1,number_of_modules+1):
   temp_profile = np.mean(img[int(points_lower[1]+0.5*lower_stave_width+height/2):int(points_lower[3]+height/2),(left_edge+int((i-1)*lower_module_length)):(left_edge+int(i*lower_module_length))],axis=1)
   offsets_bottomStave_lowerSmall.append(int(points_lower[1]+0.5*lower_stave_width+height/2)+np.argmax(temp_profile))
-  plt.plot(temp_profile)
+  #plt.plot(temp_profile)
 
 #print(offsets_bottomStave_lowerSmall)
 #print(points_lower[1]+ int(lower_stave_width/2+0.2826*lower_stave_width+height/2))
@@ -655,21 +655,38 @@ print("-------------------------")
 #plt.imshow(lower_img)
 #plt.show()
 
-plt.imshow(img3)
-plt.show()
-
+#plt.imshow(img3)
+#plt.show()
 
 #plt.imshow(crop_img, cmap='hot', interpolation='nearest')
 #plt.show()
 
-outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES.csv"
-print("Outputing data into a file: " + outputFilename)
-with open(outputFilename, "w+") as f:
+outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES"
+
+print("Outputing data into a file: " + outputFilename + ".csv")
+with open(outputFilename+".csv", "w+") as f:
   f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion \n")
   for i in range(0,28):
     f.write(str(i)+", "+str(thermalImpedance_topLargeRegion[i])+", "+str(thermalImpedance_bottomLargeRegion[i])+", "+str(thermalImpedance_topSmallRegion[i])+", "+str(thermalImpedance_bottomSmallRegion[i]) + "\n")
 
 f.close()
+
+plt.figure(figsize=(12,6))
+plt.plot(thermalImpedance_topLargeRegion, label="Large Region: top")
+plt.plot(thermalImpedance_bottomLargeRegion, label="Large Region: bottom")
+plt.plot(thermalImpedance_topSmallRegion, label="Small Region: top")
+plt.plot(thermalImpedance_bottomSmallRegion, label="Small Region: bottom")
+plt.xlabel("Module number")
+plt.ylabel("Thermal Impedance [C/W]")
+plt.title("Thermal Impedances for the Stave control regions")
+yrange = int(1+1.1*np.max([np.max(thermalImpedance_topLargeRegion),np.max(thermalImpedance_bottomLargeRegion),np.max(thermalImpedance_topSmallRegion),np.max(thermalImpedance_bottomSmallRegion)]))
+plt.xticks(np.arange(0, 28, 1.0))
+plt.yticks(np.arange(0, yrange, 0.5))
+plt.axis([-0.5,27.5,0,yrange])
+plt.grid()
+plt.legend()
+plt.savefig(outputFilename + ".png")
+plt.show()
 
 """ 
   #Print all of the Fit Lines
