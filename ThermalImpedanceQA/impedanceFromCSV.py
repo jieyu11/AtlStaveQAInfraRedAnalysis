@@ -413,45 +413,55 @@ offsets_topStave_lowerSmall = []
 offsets_bottomStave_upperSmall = []
 offsets_bottomStave_lowerSmall = []
 
-for i in range(1,number_of_modules+1):
-  temp_profile = np.mean(img[points_upper[1]:int(points_upper[1]+0.5*upper_stave_width),(left_edge+int((i-1)*upper_module_length)):(left_edge+int(i*upper_module_length))],axis=1)
-  offsets_topStave_upperSmall.append(points_upper[1]+np.argmax(temp_profile))
-  #plt.plot(temp_profile)
+region_relaxation = False
 
-#print(offsets_topStave_upperSmall)
-#print(points_upper[1]+ int(0.2826*upper_stave_width))
-#plt.show()
+logging.debug("region_relaxation = " + str(region_relaxation))
 
-for i in range(1,number_of_modules+1):
-  temp_profile = np.mean(img[int(points_upper[1]+0.5*upper_stave_width):points_upper[3],(left_edge+int((i-1)*upper_module_length)):(left_edge+int(i*upper_module_length))],axis=1)
-  offsets_topStave_lowerSmall.append(int(points_upper[1]+0.5*upper_stave_width)+np.argmax(temp_profile))
-  #plt.plot(temp_profile)
+if region_relaxation:
+  for i in range(1,number_of_modules+1):
+    temp_profile = np.mean(img[points_upper[1]:int(points_upper[1]+0.5*upper_stave_width),(left_edge+int((i-1)*upper_module_length)):(left_edge+int(i*upper_module_length))],axis=1)
+    offsets_topStave_upperSmall.append(points_upper[1]+np.argmax(temp_profile))
+    #plt.plot(temp_profile)
 
-#print(offsets_topStave_lowerSmall)
-#print(points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width))
-#plt.show()
+  #print(offsets_topStave_upperSmall)
+  #print(points_upper[1]+ int(0.2826*upper_stave_width))
+  #plt.show()
 
-left_edge = points_lower[0]
-right_edge = points_lower[3]
+  for i in range(1,number_of_modules+1):
+    temp_profile = np.mean(img[int(points_upper[1]+0.5*upper_stave_width):points_upper[3],(left_edge+int((i-1)*upper_module_length)):(left_edge+int(i*upper_module_length))],axis=1)
+    offsets_topStave_lowerSmall.append(int(points_upper[1]+0.5*upper_stave_width)+np.argmax(temp_profile))
+    #plt.plot(temp_profile)
 
-for i in range(1,number_of_modules+1):
-  temp_profile = np.mean(img[(int(height/2)+points_lower[1]):int(height/2+points_lower[1]+0.5*lower_stave_width),(left_edge+int((i-1)*lower_module_length)):(left_edge+int(i*lower_module_length))],axis=1)
-  offsets_bottomStave_upperSmall.append(points_lower[1]+np.argmax(temp_profile)+int(height/2))
-  #plt.plot(temp_profile)
+  #print(offsets_topStave_lowerSmall)
+  #print(points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width))
+  #plt.show()
 
-#print(offsets_bottomStave_upperSmall)
-#print(points_lower[1]+ int(0.2826*lower_stave_width+height/2))
-#plt.show()
+  left_edge = points_lower[0]
+  right_edge = points_lower[3]
 
-for i in range(1,number_of_modules+1):
-  temp_profile = np.mean(img[int(points_lower[1]+0.5*lower_stave_width+height/2):int(points_lower[3]+height/2),(left_edge+int((i-1)*lower_module_length)):(left_edge+int(i*lower_module_length))],axis=1)
-  offsets_bottomStave_lowerSmall.append(int(points_lower[1]+0.5*lower_stave_width+height/2)+np.argmax(temp_profile))
-  #plt.plot(temp_profile)
+  for i in range(1,number_of_modules+1):
+    temp_profile = np.mean(img[(int(height/2)+points_lower[1]):int(height/2+points_lower[1]+0.5*lower_stave_width),(left_edge+int((i-1)*lower_module_length)):(left_edge+int(i*lower_module_length))],axis=1)
+    offsets_bottomStave_upperSmall.append(points_lower[1]+np.argmax(temp_profile)+int(height/2))
+    #plt.plot(temp_profile)
 
-#print(offsets_bottomStave_lowerSmall)
-#print(points_lower[1]+ int(lower_stave_width/2+0.2826*lower_stave_width+height/2))
-#plt.show()
-
+  #print(offsets_bottomStave_upperSmall)
+  #print(points_lower[1]+ int(0.2826*lower_stave_width+height/2))
+  #plt.show()
+  
+  for i in range(1,number_of_modules+1):
+    temp_profile = np.mean(img[int(points_lower[1]+0.5*lower_stave_width+height/2):int(points_lower[3]+height/2),(left_edge+int((i-1)*lower_module_length)):(left_edge+int(i*lower_module_length))],axis=1)
+    offsets_bottomStave_lowerSmall.append(int(points_lower[1]+0.5*lower_stave_width+height/2)+np.argmax(temp_profile))
+    #plt.plot(temp_profile)
+  
+  #print(offsets_bottomStave_lowerSmall)
+  #print(points_lower[1]+ int(lower_stave_width/2+0.2826*lower_stave_width+height/2))
+  #plt.show()
+else:
+  #if the relaxation is not turned on, fix the positions of the regions w.r.t. the stave edges
+  offsets_topStave_upperSmall = [points_upper[1]+ int(0.2826*upper_stave_width)] * number_of_modules
+  offsets_topStave_lowerSmall = [points_upper[1]+ int(upper_stave_width/2+0.2826*upper_stave_width)] * number_of_modules
+  offsets_bottomStave_upperSmall = [points_lower[1]+ int(0.2826*lower_stave_width+height/2)] * number_of_modules
+  offsets_bottomStave_lowerSmall = [points_lower[1]+ int(lower_stave_width/2+0.2826*lower_stave_width+height/2)] * number_of_modules
 
 logging.debug("TOP stave:")
 #for the upper stave (as shown in the CSV file)
