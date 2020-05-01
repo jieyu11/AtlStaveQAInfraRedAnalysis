@@ -16,8 +16,9 @@ import numpy as np
 import cv2
 import ROOT
 import csv
-import sys
+import os
 import configparser
+import argparse
 from matplotlib import pyplot as plt
 
 def FindPoints(image, aproxYpos):
@@ -40,8 +41,18 @@ def FindPoints(image, aproxYpos):
   lower = int(max(0,(1-sigma)*v))
   upper = int(min(255,(1+sigma)*v))
 
-  laplacian = cv2.Canny(np.uint8(image),lower,upper)
-  image2 = laplacian
+  image2 = cv2.Canny(np.uint8(image),lower,upper)
+  
+  #sva the canny image into the debug folder
+  if args.debug:
+    plt.figure(figsize=(12,12))
+    plt.imshow(image2)
+    if os.path.isfile("debug_output/canny.png"):
+      plt.savefig("debug_output/canny2.png")
+    else:
+	  plt.savefig("debug_output/canny.png")
+    plt.clf()
+  
   """
   #Makes a Canny Image that can be checked
   histcanny = ROOT.TH2F("cannyplot","Canny Plot;xPixel;yPixel",xPixels,0,xPixels,yPixels,0,yPixels)
@@ -284,18 +295,27 @@ def FindPoints(image, aproxYpos):
   return [x0,y0,x1,y1]
 
 
-if len(sys.argv) <= 1:
-  print("Missing argument. First argument should be a .csv file")
-  quit()
+parser = argparse.ArgumentParser()
+parser.add_argument("path", help="The path to the input CSV file")
+parser.add_argument("-d","--debug", help="Runs the code in debug mode", action="store_true")
+parser.add_argument("-g","--graphs", help="Outputs the graph", action="store_true")
+args = parser.parse_args()
 
-inputFile =  sys.argv[1]
+inputFile = args.path
 
 #check if the suffix is .csv
-
 if inputFile[-3:] != "csv":
   print("The input file should be a .csv file")
   quit()
 
+#create the folder for debug output
+try:
+  if args.debug: 
+	os.mkdir("debug_output")
+	print("Running the code in the ***DEBUG MODE***")
+except OSError:
+  print("Folder called 'debug_output' already exists. Please delete it.")
+  quit()
 
 #upload the CSV file 
 image = []
@@ -328,13 +348,17 @@ print("lower points: " + str(points_lower))
 
 print("------------------------------------------------")
 
-#drawing the rectangles on the IR image
-#deep copy of the image to draw on the image without affecting the original one that is used to compute the temperatures
-img3 = np.copy(img)
 
+#deep copy of the image to draw on the image without affecting the original one that is used to compute the impedances
+if args.debug:
+  img_staveEdges = np.copy(img)
+  img_largeRegions = np.copy(img)
+  img_smallRegions = np.copy(img)
 
-#cv2.rectangle(img3,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
-#cv2.rectangle(img3,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
+#draw the stave edges
+if args.debug:
+  cv2.rectangle(img_staveEdges,(points_upper[0],points_upper[1]),(points_upper[2],points_upper[3]),(0,0,0),thickness=1)
+  cv2.rectangle(img_staveEdges,(points_lower[0],points_lower[1]+int(height/2)),(points_lower[2],points_lower[3]+int(height/2)),(0,0,0),thickness=1)
 
 
 #drawing the modules regions and calculating the average temperature
@@ -418,11 +442,11 @@ for i in range(1,number_of_modules+1):
 
 #for the upper stave (as shown in the CSV file)
 for i in range(1,number_of_modules+1):
-  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
-  #cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
-
-  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),offsets_topStave_upperSmall[i-1]-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),offsets_topStave_upperSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
-  cv2.rectangle(img3,(points_upper[0]+int((i-1)*upper_module_length),offsets_topStave_lowerSmall[i-1]-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),offsets_topStave_lowerSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
+  if args.debug:
+    cv2.rectangle(img_largeRegions,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]),(points_upper[0]+int(i*upper_module_length),points_upper[1]+upper_stave_width/2),(0,0,0),thickness=1)
+    cv2.rectangle(img_largeRegions,(points_upper[0]+int((i-1)*upper_module_length),points_upper[1]+upper_stave_width/2),(points_upper[0]+int(i*upper_module_length),points_upper[3]),(0,0,0),thickness=1)
+    cv2.rectangle(img_smallRegions,(points_upper[0]+int((i-1)*upper_module_length),offsets_topStave_upperSmall[i-1]-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),offsets_topStave_upperSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
+    cv2.rectangle(img_smallRegions,(points_upper[0]+int((i-1)*upper_module_length),offsets_topStave_lowerSmall[i-1]-pixelsSmallRegion),(points_upper[0]+int(i*upper_module_length),offsets_topStave_lowerSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
   
   top_y = points_upper[1]
   bottom_y = points_upper[1]+upper_stave_width/2
@@ -463,13 +487,12 @@ for i in range(1,number_of_modules+1):
 
 #loop for the lower stave (as shown in the CSV file)
 for i in range(1,number_of_modules+1):
-  #show the large regions
-  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
-  #cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
-
-  #show the small regions
-  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),offsets_bottomStave_upperSmall[i-1]-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),offsets_bottomStave_upperSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
-  cv2.rectangle(img3,(points_lower[0]+int((i-1)*lower_module_length),offsets_bottomStave_lowerSmall[i-1]-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),offsets_bottomStave_lowerSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
+  #show the large and small regions
+  if args.debug:
+    cv2.rectangle(img_largeRegions,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)),(points_lower[0]+int(i*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(0,0,0),thickness=1)
+    cv2.rectangle(img_largeRegions,(points_lower[0]+int((i-1)*lower_module_length),points_lower[1]+int(height/2)+lower_stave_width/2),(points_lower[0]+int(i*lower_module_length),points_lower[3]+int(height/2)),(0,0,0),thickness=1)
+    cv2.rectangle(img_smallRegions,(points_lower[0]+int((i-1)*lower_module_length),offsets_bottomStave_upperSmall[i-1]-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),offsets_bottomStave_upperSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
+    cv2.rectangle(img_smallRegions,(points_lower[0]+int((i-1)*lower_module_length),offsets_bottomStave_lowerSmall[i-1]-pixelsSmallRegion),(points_lower[0]+int(i*lower_module_length),offsets_bottomStave_lowerSmall[i-1]+pixelsSmallRegion),(0,0,0),thickness=1)
 
   top_y = points_lower[1]+int(height/2)
   bottom_y = points_lower[1]+lower_stave_width/2+int(height/2)
@@ -661,6 +684,18 @@ print("-------------------------")
 #plt.imshow(crop_img, cmap='hot', interpolation='nearest')
 #plt.show()
 
+if args.debug:
+  plt.figure(figsize=(12,12))
+  plt.imshow(img_largeRegions)
+  plt.savefig("debug_output/largeRegions.png")
+  plt.clf()
+  plt.imshow(img_smallRegions)
+  plt.savefig("debug_output/smallRegions.png")
+  plt.clf()
+  plt.imshow(img_staveEdges)
+  plt.savefig("debug_output/staveEdges.png")
+  plt.clf()
+
 outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES"
 
 print("Outputing data into a file: " + outputFilename + ".csv")
@@ -685,8 +720,9 @@ plt.yticks(np.arange(0, yrange, 0.5))
 plt.axis([-0.5,27.5,0,yrange])
 plt.grid()
 plt.legend()
-plt.savefig(outputFilename + ".png")
-plt.show()
+
+if args.graphs:
+  plt.savefig(outputFilename + ".png")
 
 """ 
   #Print all of the Fit Lines
