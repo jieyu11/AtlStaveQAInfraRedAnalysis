@@ -19,6 +19,7 @@ import csv
 import os
 import configparser
 import argparse
+import logging
 from matplotlib import pyplot as plt
 
 def FindPoints(image, aproxYpos):
@@ -314,10 +315,16 @@ try:
 	os.mkdir("debug_output")
 	print("Running the code in the ***DEBUG MODE***")
 except OSError:
-  print("Folder called 'debug_output' already exists. Please delete it.")
+  print("Folder called 'debug_output' already exists. Please delete it or rename it.")
   quit()
 
-#upload the CSV file 
+
+#set up the debugging log
+if args.debug:
+  logging.basicConfig(filename='debug_output/debug.log',level=logging.DEBUG)
+
+#upload the CSV file
+logging.debug("Opening the CSV file")
 image = []
 with open(inputFile) as csvfile:
   reader = csv.reader(csvfile, quoting=csv.QUOTE_NONNUMERIC)
@@ -330,23 +337,17 @@ height = img.shape[0]
 width = img.shape[1]
 
 # split the image into two images
+logging.debug("Splitting the image in half horizontally")
 upper_img = img[0:int(height/2), 0:width].transpose()
 lower_img = img[int(height/2):height, 0:width].transpose()
-
-
-print("------------------------------------------------")
 
 #look for the edges in both (uppe and lower) part of the images
 #FindPoits function has to be given the approximate Y position of the stave core
 points_upper = FindPoints(upper_img,200)
-print("upper points: " + str(points_upper))
-
+logging.debug("upper points: " + str(points_upper))
 
 points_lower = FindPoints(lower_img,40)
-print("lower points: " + str(points_lower))
-
-
-print("------------------------------------------------")
+logging.debug("lower points: " + str(points_lower))
 
 
 #deep copy of the image to draw on the image without affecting the original one that is used to compute the impedances
@@ -371,6 +372,13 @@ lower_stave_length = points_lower[2] - points_lower[0]
 lower_stave_width = points_lower[3] - points_lower[1]
 lower_module_length = lower_stave_length/(number_of_modules*1.0) #need to convert to double to get rid of rounding error
 
+logging.debug("upper_stave_length = " + str(upper_stave_length))
+logging.debug("upper_stave_width = " + str(upper_stave_width))
+logging.debug("upper_module_length = " + str(upper_module_length))
+logging.debug("lower_stave_length = " + str(lower_stave_length))
+logging.debug("lower_stave_width = " + str(lower_stave_width))
+logging.debug("lower_module_length = " + str(lower_module_length))
+
 topStave_largeUpperRegion_temp = []
 topStave_largeLowerRegion_temp = []
 bottomStave_largeUpperRegion_temp = []
@@ -383,10 +391,16 @@ bottomStave_smallLowerRegion_temp = []
 
 
 #calculating number of pixels (vertically) for the small region (8.0mm wide)
-pixelsSmallRegion = int(round((4.0*upper_stave_width)/115))
+smallRegion_width = 8.0 #in millimetres
+logging.debug("smallRegion_width = " + str(smallRegion_width) + "  [in millimetres]")
+pixelsSmallRegion = int(round((0.5*smallRegion_width*upper_stave_width)/115))
 
 if pixelsSmallRegion == 0:
+  logging.debug("The calculated pixel width of the control region is zero => choose 1")
   pixelsSmallRegion=1
+
+logging.debug("pixelsSmallRegion = " + str(pixelsSmallRegion) + "  [this is only half of the whole region]")
+
 
 ##############
 #find horizontal line with the highest temperature to be used for the small regions
@@ -439,7 +453,7 @@ for i in range(1,number_of_modules+1):
 #plt.show()
 
 
-
+logging.debug("TOP stave:")
 #for the upper stave (as shown in the CSV file)
 for i in range(1,number_of_modules+1):
   if args.debug:
@@ -452,8 +466,8 @@ for i in range(1,number_of_modules+1):
   bottom_y = points_upper[1]+upper_stave_width/2
   left_x = points_upper[0]+int((i-1)*upper_module_length)
   right_x = points_upper[0]+int(i*upper_module_length)
-
-  #print("[" + str(left_x) + ", " + str(top_y) + "]" +  " ..... [" +  str(right_x) + ", " + str(bottom_y) + "]")
+  
+  logging.debug("largeUpperRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
   
   crop = img[top_y:bottom_y,left_x:right_x]
   topStave_largeUpperRegion_temp.append(np.mean(crop))
@@ -463,6 +477,8 @@ for i in range(1,number_of_modules+1):
   bottom_y = points_upper[3]
   left_x = points_upper[0]+int((i-1)*upper_module_length)
   right_x = points_upper[0]+int(i*upper_module_length)
+  
+  logging.debug("largeLowerRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
 
   crop = img[top_y:bottom_y,left_x:right_x]
   topStave_largeLowerRegion_temp.append(np.mean(crop))
@@ -472,19 +488,23 @@ for i in range(1,number_of_modules+1):
   left_x = points_upper[0]+int((i-1)*upper_module_length)
   right_x = points_upper[0]+int(i*upper_module_length)
   
+  logging.debug("smallUpperRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
+  
   crop = img[top_y:bottom_y,left_x:right_x]
   topStave_smallUpperRegion_temp.append(np.mean(crop))
-  
   
   top_y = offsets_topStave_lowerSmall[i-1]-pixelsSmallRegion
   bottom_y = offsets_topStave_lowerSmall[i-1]+pixelsSmallRegion
   left_x = points_upper[0]+int((i-1)*upper_module_length)
   right_x = points_upper[0]+int(i*upper_module_length)
   
+  logging.debug("smallLowerRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
+  
   crop = img[top_y:bottom_y,left_x:right_x]
   topStave_smallLowerRegion_temp.append(np.mean(crop))
 
 
+logging.debug("BOTTOM stave:")
 #loop for the lower stave (as shown in the CSV file)
 for i in range(1,number_of_modules+1):
   #show the large and small regions
@@ -499,6 +519,8 @@ for i in range(1,number_of_modules+1):
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
   
+  logging.debug("largeUpperRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
+  
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_largeUpperRegion_temp.append(np.mean(crop))
   
@@ -508,7 +530,8 @@ for i in range(1,number_of_modules+1):
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
 
-  #print("[" + str(left_x) + ", " + str(top_y) + "]" +  " ..... [" +  str(right_x) + ", " + str(bottom_y) + "]")
+  logging.debug("largeLowerRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
+  
   #calculating the temperature for the large region and saving it
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_largeLowerRegion_temp.append(np.mean(crop))
@@ -518,6 +541,8 @@ for i in range(1,number_of_modules+1):
   bottom_y = offsets_bottomStave_upperSmall[i-1]+pixelsSmallRegion
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
+  
+  logging.debug("smallUpperRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
   
   #calculating the temperature from the small region and saving it
   crop = img[top_y:bottom_y,left_x:right_x]
@@ -529,33 +554,31 @@ for i in range(1,number_of_modules+1):
   left_x = points_lower[0]+int((i-1)*lower_module_length)
   right_x = points_lower[0]+int(i*lower_module_length)
   
+  logging.debug("smallLowerRegion #" + str(i) + ": [top_y,bottom_y,left_x,right_x] = " + str([top_y,bottom_y,left_x,right_x]))
+  
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_smallLowerRegion_temp.append(np.mean(crop))
  
 
-print("------------------------------------------------")
-
 #importing data from parameters.cfg
 filename = "parameters.cfg"
-print("Importing variables from config file " + filename + ":")
+logging.debug("Importing variables from config file " + filename + ":")
 config = configparser.ConfigParser()
 config.read(filename)
 
 Tin = float(config["Default"]["temp_in"])
 Tout = float(config["Default"]["temp_out"])
-Cliq = float(config["Default"]["c_liquid"])
+heatCapacity = float(config["Default"]["c_liquid"])
 Zcut = float(config["Default"]["z_cut"])
 FR = float(config["Default"]["flow_rate"])
 
 #print the imported variables
 for variable in config.items("Default"):
-  print(variable[0] + " = " + variable[1]) 
-print("------------------------------------------------")
-
+  logging.debug(variable[0] + " = " + variable[1]) 
 
 #temperature profile of the liquid comes from the finite element analysis of the stave
 temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1]
-
+logging.debug("temperatureProfile = " + str(temperatureProfile))
 
 #scale scale it up
 Tliquid = map(lambda x:x*((Tout-Tin)/temperatureProfile[-1]), temperatureProfile)
@@ -563,12 +586,7 @@ Tliquid = map(lambda x:x*((Tout-Tin)/temperatureProfile[-1]), temperatureProfile
 #shift it to match Tin
 Tliquid = map(lambda x:x+(Tin-Tliquid[0]), Tliquid)
 
-"""
-#linear extrapolation of the temperature of the liquid
-Tliquid = Tin - ((Tin-Tout)/28.0)*np.linspace(0,28,29)
-"""
-
-heatCapacity = Cliq
+logging.debug("Tliquid = " + str(Tliquid) + "[scaled temperature profile, matched to the Tin and Tout variable]")
 
 thermalImpedance_topLargeRegion = []
 thermalImpedance_bottomLargeRegion = []
@@ -577,6 +595,17 @@ thermalImpedance_bottomSmallRegion = []
 
 
 flowRate_kgPerSec = FR/60
+
+logging.debug("flowRate_kgPerSec = " + str(flowRate_kgPerSec))
+
+logging.debug("topStave_largeUpperRegion_temp = " + str(topStave_largeUpperRegion_temp))
+logging.debug("bottomStave_largeUpperRegion_temp = " + str(bottomStave_largeUpperRegion_temp))
+logging.debug("topStave_largeLowerRegion_temp = " + str(topStave_largeLowerRegion_temp))
+logging.debug("bottomStave_largeLowerRegion_temp = " + str(bottomStave_largeLowerRegion_temp))
+logging.debug("topStave_smallUpperRegion_temp = " + str(topStave_smallUpperRegion_temp))
+logging.debug("bottomStave_smallUpperRegion_temp = " + str(bottomStave_smallUpperRegion_temp))
+logging.debug("topStave_smallLowerRegion_temp = " + str(topStave_smallLowerRegion_temp))
+logging.debug("bottomStave_smallLowerRegion_temp = " + str(bottomStave_smallLowerRegion_temp))
 
 
 #impedance for the large region
@@ -617,74 +646,8 @@ for i in range(14,28):
   thermalImpedance_bottomSmallRegion.append(averageTempDiff_lowerFace/heat)
 
 
-
-
-"""
-print("Upper face:")
-print(thermalImpedance_topLargeRegion)
-print("Lower face:")
-print(thermalImpedance_bottomLargeRegion)
-"""
-
-"""
-print("Large region, Upper Face:")
-print("# \t Impedance \t QA")
-for i in range(0,28):
-  print(str(i) + "\t" + "%0.3f" % thermalImpedance_topLargeRegion[i] + "\t\t" + ("OK" if thermalImpedance_topLargeRegion[i] <= Zcut else "FAIL"))
-
-print("-------------------------")
-
-print("Large region, Lower Face:")
-print("# \t Impedance \t QA")
-for i in range(0,28):
-  print(str(i) + "\t" + "%0.3f" % thermalImpedance_bottomLargeRegion[i] + "\t\t" + ("OK" if thermalImpedance_bottomLargeRegion[i] <= Zcut else "FAIL"))
-
-
-print("-------------------------")
-print("-------------------------")
-print("-------------------------")
-
-print("Small region, Upper Face:")
-print("# \t Impedance \t QA")
-for i in range(0,28):
-  print(str(i) + "\t" + "%0.3f" % thermalImpedance_topSmallRegion[i] + "\t\t" + ("OK" if thermalImpedance_topSmallRegion[i] <= Zcut else "FAIL"))
-
-print("-------------------------")
-
-
-print("Small region, Lower Face:")
-print("# \t Impedance \t QA")
-for i in range(0,28):
-  print(str(i) + "\t" + "%0.3f" % thermalImpedance_bottomSmallRegion[i] + "\t\t" + ("OK" if thermalImpedance_bottomSmallRegion[i] <= Zcut else "FAIL"))
-
-print("-------------------------")
-print("-------------------------")
-print("-------------------------")
-print("topStave_smallUpperRegion_temp = " + str(topStave_smallUpperRegion_temp))
-print("-------------------------")
-print("topStave_smallLowerRegion_temp = " + str(topStave_smallLowerRegion_temp))
-print("-------------------------")
-print("bottomStave_smallUpperRegion_temp = " + str(bottomStave_smallUpperRegion_temp))
-print("-------------------------")
-print("bottomStave_smallLowerRegion_temp = " + str(bottomStave_smallLowerRegion_temp))
-print("-------------------------")
-print("Tliquid = " + str(Tliquid))
-print("-------------------------")
-"""
-
-
-#plt.imshow(upper_img)
-#plt.show()
-#plt.imshow(lower_img)
-#plt.show()
-
-#plt.imshow(img3)
-#plt.show()
-
-#plt.imshow(crop_img, cmap='hot', interpolation='nearest')
-#plt.show()
-
 if args.debug:
+  print("Saving debug files into folder debug_output")
   plt.figure(figsize=(12,12))
   plt.imshow(img_largeRegions)
   plt.savefig("debug_output/largeRegions.png")
