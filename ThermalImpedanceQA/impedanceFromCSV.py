@@ -323,6 +323,25 @@ except OSError:
 if args.debug:
   logging.basicConfig(filename='debug_output/debug.log',level=logging.DEBUG)
 
+
+#importing data from parameters.cfg
+filename = "parameters.cfg"
+logging.debug("Importing variables from config file " + filename + ":")
+config = configparser.ConfigParser()
+config.read(filename)
+
+Tin = float(config["Default"]["temp_in"])
+Tout = float(config["Default"]["temp_out"])
+heatCapacity = float(config["Default"]["c_liquid"])
+Zcut = float(config["Default"]["z_cut"])
+FR = float(config["Default"]["flow_rate"])
+region_relaxation = bool(int(config["Default"]["region_relaxation"]))
+
+#print the imported variables
+for variable in config.items("Default"):
+  logging.debug(variable[0] + " = " + variable[1]) 
+
+
 #upload the CSV file
 logging.debug("Opening the CSV file")
 image = []
@@ -412,8 +431,6 @@ offsets_topStave_upperSmall = []
 offsets_topStave_lowerSmall = []
 offsets_bottomStave_upperSmall = []
 offsets_bottomStave_lowerSmall = []
-
-region_relaxation = False
 
 logging.debug("region_relaxation = " + str(region_relaxation))
 
@@ -568,23 +585,6 @@ for i in range(1,number_of_modules+1):
   
   crop = img[top_y:bottom_y,left_x:right_x]
   bottomStave_smallLowerRegion_temp.append(np.mean(crop))
- 
-
-#importing data from parameters.cfg
-filename = "parameters.cfg"
-logging.debug("Importing variables from config file " + filename + ":")
-config = configparser.ConfigParser()
-config.read(filename)
-
-Tin = float(config["Default"]["temp_in"])
-Tout = float(config["Default"]["temp_out"])
-heatCapacity = float(config["Default"]["c_liquid"])
-Zcut = float(config["Default"]["z_cut"])
-FR = float(config["Default"]["flow_rate"])
-
-#print the imported variables
-for variable in config.items("Default"):
-  logging.debug(variable[0] + " = " + variable[1]) 
 
 #temperature profile of the liquid comes from the finite element analysis of the stave
 temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1]
