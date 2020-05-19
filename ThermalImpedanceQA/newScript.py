@@ -51,14 +51,78 @@ width = image.shape[1]
 staveTop.FindStaveWithin(0,width,0,height/2)
 staveBottom.FindStaveWithin(0,width,height/2,height)
 
+#print the positions of the staves
 staveTop.Echo()
 staveBottom.Echo()
 
+#create a deep copy of the image, to which the edges/regions will be drawn
 img_edges = np.copy(image)
 staveTop.DrawEdges(img_edges)
 staveBottom.DrawEdges(img_edges)
 
-plt.imshow(img_edges)
+numModules = 14
+
+#large regions
+for i in range(numModules):
+  staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.0,0.5,"large")
+  staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.0,0.5,"large")
+
+#large regions - return pipe
+for i in reversed(range(numModules)):
+  staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5,1.0,"large")
+  staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5,1.0,"large")
+
+#small regions above the pipe
+for i in range(numModules):
+  staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+  staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+
+#small regions above the pipe (return pipe)
+for i in reversed(range(numModules)):
+  staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+  staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+
+#drawing the regions
+staveBottom.DrawRegions(img_edges,"large")
+staveTop.DrawRegions(img_edges,"large")
+staveBottom.DrawRegions(img_edges,"small")
+staveTop.DrawRegions(img_edges,"small")
+
+staveBottomTemp = staveBottom.getTemperatures("small")
+staveTopTemp = staveTop.getTemperatures("small")
+
+
+
+#using the temperature profile provided by the FEA (otherwise a linear extrapolation would be used)
+temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1.0]
+staveBottom.setTemperatureProfile(temperatureProfile)
+staveTop.setTemperatureProfile(temperatureProfile)
+
+#extracting the impedances
+largeTop = staveTop.getImpedances("large")
+largeBottom = staveBottom.getImpedances("large")
+smallTop = staveTop.getImpedances("small")
+smallBottom = staveBottom.getImpedances("small")
+
+#plotting
+plt.figure(figsize=(12,6))
+plt.plot(largeTop, label="Large Region: top")
+plt.plot(largeBottom, label="Large Region: bottom")
+plt.plot(smallTop, label="Small Region: top")
+plt.plot(smallBottom, label="Small Region: bottom")
+plt.xlabel("Module number")
+plt.ylabel("Thermal Impedance [C/W]")
+plt.title("Thermal Impedances for the Stave control regions")
+yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom)]))
+plt.xticks(np.arange(0, 28, 1.0))
+plt.yticks(np.arange(0, yrange, 0.5))
+plt.axis([-0.5,27.5,0,yrange])
+plt.grid()
+plt.legend()
 plt.show()
 
 
+"""
+plt.imshow(img_edges)
+plt.show()
+"""

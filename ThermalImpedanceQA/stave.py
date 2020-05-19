@@ -5,6 +5,7 @@ import os
 import cv2
 import configparser
 import numpy as np
+import math
 from matplotlib import pyplot as plt
 
 class Stave:
@@ -33,10 +34,13 @@ class Stave:
     self.__Zcut = float(config["Default"]["z_cut"])
     self.__FR = float(config["Default"]["flow_rate"])
     self.__region_relaxation = bool(int(config["Default"]["region_relaxation"]))
-
+    
     #print the imported variables
     for variable in config.items("Default"):
       logging.debug(variable[0] + " = " + variable[1])
+      
+    #default temperature profile of the cooling liquid (linear extraploation)
+    self.__temperatureProfile = [x/28.0 for x in list(range(0,29))]
     
   def FindStaveWithin(self, xMin, xMax, yMin, yMax):
     if xMin > xMax or yMin > yMax:
@@ -243,15 +247,32 @@ class Stave:
     self.__staveFound = True
     self.__staveImg = self.__globalImg[self.__xLeft:self.__xRight,self.__yTop:self.__yBottom]
 
+
+  def setTemperatureProfile(self,newTemperatureProfile):
+    self.__temperatureProfile = newTemperatureProfile
+
   def AddRegion(self,xLeft,xRight,yTop,yBottom,type):
     if not self.__staveFound:
-	  raise Exception("Cannot define a region for stave that has not been found.")
-	
+      raise Exception("Cannot define a region for stave that has not been found.")
+    
+    if len(list(filter(lambda x : x > 1.0 or x < 0.0, [xLeft,xRight,yTop,yBottom]))) > 0:
+      raise Exception("Regions are defined by relative coordinates w.r.t. the stave. The coordinates must be between 0.0 and 1.0.")
+    
+    if not(xLeft < xRight and yTop < yBottom):
+      raise Exception("The coordiates for the region are invalid.")
+    
+    regionXLeft = self.__xLeft + xLeft*self.__length
+    regionYTop = self.__yTop + yTop*self.__width
+    regionXRight = self.__xLeft + xRight*self.__length
+    regionYBottom = self.__yTop + yBottom*self.__width
+    
+    newRegion = Region(self.__globalImg,regionXLeft,regionXRight,regionYTop,regionYBottom)
+    
     if type in self.__regions:
-      self.__regions[type].append(Region(self.__staveImg,xLeft,xRight,yTop,yBottom))
+      self.__regions[type].append(newRegion)
     else:
 	  self.__regions[type] = []
-	  self.__regions[type].append(Region(self.__staveImg,xLeft,xRight,yTop,yBottom))
+	  self.__regions[type].append(newRegion)
 	
   def Echo(self):
     if self.__staveFound:
@@ -260,10 +281,8 @@ class Stave:
       raise("Stave has not been found yet.")
     
    
-  def PrintRegions(self):
-    for regionType in self.__regions:
-      print(regionType+": ")
-      for region in self.__regions[regionType]:
+  def PrintRegions(self,regionType):
+    for region in self.__regions[regionType]:
 	    region.Echo()
    
   def Show(self):
@@ -279,29 +298,58 @@ class Stave:
   def DrawRegions(self,imgToBeImprinted,regionType):
     for region in self.__regions[regionType]:
       position = region.getPosition()
-      cv2.rectangle(imgToBeImprinted,(position[2],position[3]),(position[0],position[1]),(0,0,0),thickness=1)
+      cv2.rectangle(imgToBeImprinted,(int(position[0]),int(position[2])),(int(position[1]),int(position[3])),(0,0,0),thickness=1)
     return
     
   def DrawEdges(self,img):
     if self.__staveFound:
       cv2.rectangle(img,(self.__xLeft,self.__yTop),(self.__xRight,self.__yBottom),(0,0,0),thickness=1)
     else:
-      raise("Stave was not found. Cannot use DrawEdges.")
+      raise Exception("Stave was not found. Cannot use DrawEdges.")
     return
-	   
+    
+  def getTemperatures(self,regionType):
+    temperatures = []
+    for region in self.__regions[regionType]:
+      temperatures.append(region.getAverageTemperature())
+    return temperatures
+	
+  def getImpedances(self,regionType):
+    regionTemp = self.getTemperatures(regionType)
+    #temp. of the cooling liquid
+    liquidTemperature = self.__temperatureProfile
+    
+    #scale scale it up
+    liquidTemperature = map(lambda x:x*((self.__Tout-self.__Tin)/self.__temperatureProfile[-1]), self.__temperatureProfile)
+
+    #shift it to match Tin
+    liquidTemperature = map(lambda x:x+(self.__Tin-liquidTemperature[0]), liquidTemperature)
+    
+    flowRateKgPerSec = self.__FR/60
+    
+    impedances = []
+
+    for i in range(0,28):
+      #divide by two to get the heat only for one part
+      heat = (liquidTemperature[i] - liquidTemperature[i+1])*self.__heatCapacity*0.5*flowRateKgPerSec
+      averageTempDiff = (liquidTemperature[i]+liquidTemperature[i+1])/2 - regionTemp[i]
+      impedances.append(averageTempDiff/heat)
+    
+    return impedances
+  
 class Region:
-  def __init__(self,staveImg,xLeft,xRight,yTop,yBottom):
+  def __init__(self,globalImg,xLeft,xRight,yTop,yBottom):
     self.__xLeft = xLeft
     self.__xRight = xRight
     self.__yTop = yTop
     self.__yBottom = yBottom
-    self.__img = staveImg[xLeft:xRight,yTop:yBottom]
+    self.__img = globalImg[int(yTop):int(yBottom),int(xLeft):int(xRight)]
     self.__averageTemperature = np.mean(self.__img)
 	
-  def getAverageTemperature():
+  def getAverageTemperature(self):
     return self.__averageTemperature
 	
-  def getPosition():
+  def getPosition(self):
     return [self.__xLeft,self.__xRight,self.__yTop,self.__yBottom]
   
   def Echo(self):
