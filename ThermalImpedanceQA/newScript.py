@@ -43,23 +43,27 @@ image = np.array(imgList)
 
 #creating the staves + loading the parameters from the config file
 staveTop = Stave(image, "parameters.cfg",args)
-staveBottom = Stave(image, "parameters.cfg",args)
+#staveBottom = Stave(image, "parameters.cfg",args)
 
-height = image.shape[0]
-width = image.shape[1]
-#finding the staves - triggers an algorithm that looks for the stave
-staveTop.FindStaveWithin(0,width,0,height/2)
-staveBottom.FindStaveWithin(0,width,height/2,height)
+staveTop.ScaleImage(2)
+#staveBottom.ScaleImage(2)
+
+#get the scaled image
+img_edges = staveTop.getImage()
+
+#finding the staves - triggers an algorithm that looks for the stave, using relative coordinates
+staveTop.FindStaveWithin(0,1.0,0,0.5)
+#staveBottom.FindStaveWithin(0,1.0,0.5,1.0)
 
 #print the positions of the staves
 staveTop.Echo()
-staveBottom.Echo()
+#staveBottom.Echo()
 
 #create a deep copy of the image, to which the edges/regions will be drawn
-img_edges = np.copy(image)
 staveTop.DrawEdges(img_edges)
-staveBottom.DrawEdges(img_edges)
+#staveBottom.DrawEdges(img_edges)
 
+"""
 numModules = 14
 
 #large regions
@@ -103,8 +107,10 @@ largeTop = staveTop.getImpedances("large")
 largeBottom = staveBottom.getImpedances("large")
 smallTop = staveTop.getImpedances("small")
 smallBottom = staveBottom.getImpedances("small")
+"""
 
 #plotting
+"""
 plt.figure(figsize=(12,6))
 plt.plot(largeTop, label="Large Region: top")
 plt.plot(largeBottom, label="Large Region: bottom")
@@ -120,9 +126,7 @@ plt.axis([-0.5,27.5,0,yrange])
 plt.grid()
 plt.legend()
 plt.show()
-
-
 """
+
 plt.imshow(img_edges)
 plt.show()
-"""

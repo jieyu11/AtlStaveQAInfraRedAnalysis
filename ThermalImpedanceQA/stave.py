@@ -19,6 +19,14 @@ class Stave:
     self.__yBottom = 0
     self.__regions = {} # dictionary
     self.__args = args
+    self.__staveLength = 630 #~14 module stave for the QMUL IR set-up
+    self.__cutPercentLength = 0.05 # 5% tolerance on the stave length
+    #parameters for the edge finding algorithms:
+    self.__minHorizontalLineLength = 50
+    self.__minVerticalLineLength = 10
+    self.__maxHorizontalLineGap = 10
+    self.__maxVerticalLineGap = 5
+    
 
     #importing data from the config file
     if not os.path.isfile(configFile):
@@ -42,13 +50,20 @@ class Stave:
     #default temperature profile of the cooling liquid (linear extraploation)
     self.__temperatureProfile = [x/28.0 for x in list(range(0,29))]
     
-  def FindStaveWithin(self, xMin, xMax, yMin, yMax):
-    if xMin > xMax or yMin > yMax:
+  def FindStaveWithin(self, relXMin, relXMax, relYMin, relYMax):
+    if relXMin > relXMax or relYMin > relYMax:
       raise Exception("FindStaveWithin(): minimal values are larger than the maximum.")
     
     if self.__staveFound:
       raise Exception("Stave was already found. Cannot call FindStaveWithin again.")
     
+    imageHeight = self.__globalImg.shape[0]
+    imageWidth = self.__globalImg.shape[1]
+    
+    xMin = int(relXMin * imageWidth)
+    xMax = int(relXMax * imageWidth)
+    yMin = int(relYMin * imageHeight)
+    yMax = int(relYMax * imageHeight)
     
     imgOfInterest = self.__globalImg[yMin:yMax,xMin:xMax]
     
@@ -57,11 +72,20 @@ class Stave:
     
     # Make The Canny Image
     v = np.median(imgOfInterest)
-    sigma = 0.33
+    #sigma = 0.33
+    sigma = 0.05
+    
+    print("max: " + str(np.max(imgOfInterest)))
+    print("min: " + str(np.min(imgOfInterest)))
+    
     lower = int(max(0,(1-sigma)*v))
     upper = int(min(255,(1+sigma)*v))
+    
+    cannyImage = cv2.Canny(np.uint8(imgOfInterest),10,10)
+    
+    plt.imshow(cannyImage)
+    plt.show()
 
-    cannyImage = cv2.Canny(np.uint8(imgOfInterest),lower,upper)
   
     #sva the canny image into the debug folder
     if self.__args.debug:
@@ -83,10 +107,12 @@ class Stave:
     
     try:
       #Find Long Horiz Lines
-      findLongLines = cv2.HoughLinesP(cannyImage,rho = 1,theta = 1*np.pi/1000,threshold = 100,minLineLength = 100,maxLineGap = 10)
+      findLongLines = cv2.HoughLinesP(cannyImage,rho = 1,theta = 1*np.pi/1000,threshold = 20,minLineLength = self.__minHorizontalLineLength,maxLineGap = self.__maxHorizontalLineGap)
       findLongLines = findLongLines.flatten()
       nlines = len(findLongLines)/4
       findLongLines = np.split(findLongLines,nlines)
+      
+      print("longlines count = " + str(len(findLongLines)))
       
       LengthHoriz = nlines
       for line in range(int(LengthHoriz)):
@@ -105,24 +131,30 @@ class Stave:
 
       aproxYpos = np.mean(HorData)
       
+      print("aproxYpos = " + str(aproxYpos))
+      print("HorData = " + str(HorData))
+      
       upperEdge = np.max(np.extract(HorData<=aproxYpos,HorData)[0])      
       lowerEdge = np.min(np.extract(HorData>aproxYpos,HorData)[0])
 
       lineData += [lowerEdge]
       lineData += [upperEdge]
-
+      
+      print("lowerEdge = " + str(lowerEdge))
+      print("upperEdge = " + str(upperEdge))
+    
     except:
       logging.error("Failed to Find Long Horizontal Lines")
       return
     
     
     
-    StaveLength = 630 #~14 module stave for the QMUL IR set-up
-    cutPercent = 0.20 # QMUL
+    StaveLength = self.__staveLength 
+    cutPercent = self.__cutPercentLength
     
     #Find Short Vert Lines
     try:
-      findShortLines = cv2.HoughLinesP(cannyImage,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = 10, maxLineGap = 5)
+      findShortLines = cv2.HoughLinesP(cannyImage,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = self.__minVerticalLineLength, maxLineGap = self.__maxVerticalLineGap)
 
       findShortLines = findShortLines.flatten()
       nlines = len(findShortLines)/4
@@ -157,11 +189,11 @@ class Stave:
         maxPoint = np.amax(VertData)
 
         #Found a line at the EOS stave end
-        if minPoint + StaveLength < 640:
+        if minPoint + StaveLength < self.__globalImg.shape[1]:
           #Find the best 
           while len(VertData) > 0:
             #Remove outside possible
-            if maxPoint + StaveLength > 640:
+            if maxPoint + StaveLength > self.__globalImg.shape[1]:
               VertData = np.delete(VertData,-1)
               maxPoint = np.amax(VertData)
             #Get best point
@@ -185,7 +217,7 @@ class Stave:
           #Find the best 
           while len(VertData) > 0:
             #Remove outside possible
-            if minPoint - StaveLength > 640-StaveLength:
+            if minPoint - StaveLength > self.__globalImg.shape[1]-StaveLength:
               VertData = np.delete(VertData,0)
               minPoint = np.amin(VertData)
             #Get best point
@@ -248,6 +280,23 @@ class Stave:
     self.__staveImg = self.__globalImg[self.__xLeft:self.__xRight,self.__yTop:self.__yBottom]
 
 
+  def ScaleImage(self, scale):
+    width = int(self.__globalImg.shape[1] * scale)
+    height = int(self.__globalImg.shape[0] * scale)
+    dim = (width, height)
+    resized = cv2.resize(self.__globalImg, dim, interpolation = cv2.INTER_LINEAR)
+    
+    #scale up the parameters
+    self.__staveLength = self.__staveLength * scale
+    #parameters for the edge finding algorithms:
+    self.__minHorizontalLineLength = self.__minHorizontalLineLength * scale
+    self.__minVerticalLineLength = self.__minVerticalLineLength * scale
+    self.__maxHorizontalLineGap = self.__maxHorizontalLineGap * scale
+    self.__maxVerticalLineGap = self.__maxVerticalLineGap * scale
+    
+    self.__globalImg = resized
+  
+  
   def setTemperatureProfile(self,newTemperatureProfile):
     self.__temperatureProfile = newTemperatureProfile
 
@@ -307,7 +356,11 @@ class Stave:
     else:
       raise Exception("Stave was not found. Cannot use DrawEdges.")
     return
-    
+
+  def getImage(self):
+    deepCopy = np.copy(self.__globalImg)
+    return deepCopy
+  
   def getTemperatures(self,regionType):
     temperatures = []
     for region in self.__regions[regionType]:
