@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+"""
+stave.py
+
+Author: Lubos Vozdecky (Queen Mary, University of London)
+About: This code implements the Stave and Region class. That are used in the impedanceFromCSV.py script. It uses a simple algorithm
+for finding the edges of the staves.
+"""
+
 import logging
 import os
 import cv2
@@ -35,9 +43,7 @@ class Stave:
     self.__Tin = float(config["Default"]["temp_in"])
     self.__Tout = float(config["Default"]["temp_out"])
     self.__heatCapacity = float(config["Default"]["c_liquid"])
-    self.__Zcut = float(config["Default"]["z_cut"])
     self.__FR = float(config["Default"]["flow_rate"])
-    self.__region_relaxation = bool(int(config["Default"]["region_relaxation"]))
     
     #print the imported variables
     for variable in config.items("Default"):
@@ -46,12 +52,19 @@ class Stave:
     #default temperature profile of the cooling liquid (linear extraploation)
     self.__temperatureProfile = [x/28.0 for x in list(range(0,29))]
     
+    logging.debug("Setting the temperature profile to the linear extrapolation by default")
+    logging.debug("temperatureProfile = " + str(self.__temperatureProfile))
+    
   def FindStaveWithin(self, relXMin, relXMax, relYMin, relYMax):
     if relXMin > relXMax or relYMin > relYMax:
+      logging.error("Minimal values are larger than the maximum.")
       raise Exception("FindStaveWithin(): minimal values are larger than the maximum.")
     
     if self.__staveFound:
+      logging.error("Calling FindStaveWithin on a stave that was already found.")
       raise Exception("Stave was already found. Cannot call FindStaveWithin again.")
+    
+    logging.debug("Finding stave algorithm:")
     
     imageHeight = self.__globalImg.shape[0]
     imageWidth = self.__globalImg.shape[1]
@@ -62,6 +75,8 @@ class Stave:
     yMax = int(relYMax * imageHeight)
     
     imgOfInterest = self.__globalImg[yMin:yMax,xMin:xMax]
+    logging.debug("Looking for the stave within: " + str([yMin,yMax,xMin,xMax]))
+    
     
     xPixels = imgOfInterest.shape[0]
     yPixels = imgOfInterest.shape[1]
@@ -71,7 +86,9 @@ class Stave:
     projection = np.sum(gradient, axis=1)
     
     upperEdge = np.argmax(projection)
+    logging.debug("upperEdge = " + str(upperEdge))
     lowerEdge = np.argmin(projection)
+    logging.debug("lowerEdge = " + str(lowerEdge))
     
     strip = imgOfInterest[upperEdge:lowerEdge,:]
     
@@ -80,14 +97,19 @@ class Stave:
     stripProjection = np.sum(stripGradient, axis=0)
     
     leftEdge = np.argmax(stripProjection)
+    logging.debug("leftEdge = " + str(leftEdge))
     rightEdge = np.argmin(stripProjection)
+    logging.debug("rightEdge = " + str(rightEdge))
     
     ratioMeasured = abs(1.0*(rightEdge-leftEdge)/(lowerEdge-upperEdge))
+    logging.debug("ratioMeasured = " +str(ratioMeasured))
     
-    print("ratioMeasured = " + str(ratioMeasured))
     
     if abs(self.__staveRatio - ratioMeasured)/self.__staveRatio > self.__staveRatioTolerance:
+      logging.error("Ratio test FAILED")
       raise Exception("Ratio of the found stave is not within the limits.")
+    
+    logging.debug("Ratio test PASSED")
     
     self.__xLeft = leftEdge + xMin
     self.__xRight = rightEdge + xMin
@@ -101,6 +123,7 @@ class Stave:
     
     
   def ScaleImage(self, scale):
+    logging.debug("Scaling image: scale = " + str(scale))
     width = int(self.__globalImg.shape[1] * scale)
     height = int(self.__globalImg.shape[0] * scale)
     dim = (width, height)
@@ -110,17 +133,24 @@ class Stave:
     self.__lineThickness = self.__lineThickness * scale
   
   def setTemperatureProfile(self,newTemperatureProfile):
+    logging.debug("Re-setting the temperature profile:")
     self.__temperatureProfile = newTemperatureProfile
+    logging.debug("temperatureProfile = " + str(self.__temperatureProfile))
 
   def AddRegion(self,xLeft,xRight,yTop,yBottom,type):
     if not self.__staveFound:
+      logging.error("Defining region for a stave that has not been found.")
       raise Exception("Cannot define a region for stave that has not been found.")
     
     if len(list(filter(lambda x : x > 1.0 or x < 0.0, [xLeft,xRight,yTop,yBottom]))) > 0:
+      logging.error("Invalid coordinates for a region. [xLeft,xRight,yTop,yBottom] = " + str([xLeft,xRight,yTop,yBottom]))
       raise Exception("Regions are defined by relative coordinates w.r.t. the stave. The coordinates must be between 0.0 and 1.0.")
     
     if not(xLeft < xRight and yTop < yBottom):
+      logging.error("Invalid coordinates for a region. [xLeft,xRight,yTop,yBottom] = " + str([xLeft,xRight,yTop,yBottom]))
       raise Exception("The coordiates for the region are invalid.")
+    
+    logging.debug("Adding a new region of type '" + str(type) + "': [xLeft,xRight,yTop,yBottom] = " + str([xLeft,xRight,yTop,yBottom]))
     
     regionXLeft = self.__xLeft + xLeft*self.__length
     regionYTop = self.__yTop + yTop*self.__width
@@ -180,17 +210,24 @@ class Stave:
     return temperatures
 	
   def getImpedances(self,regionType):
+    logging.debug("Calculating impedances of region type '" + str(regionType) + "'")
     regionTemp = self.getTemperatures(regionType)
     #temp. of the cooling liquid
     liquidTemperature = self.__temperatureProfile
     
-    #scale scale it up
+    logging.debug("Scaling the temperature profile accoreding to [Tout,Tin] = " + str([self.__Tout,self.__Tin]))
+    
+    #scale it up
     liquidTemperature = map(lambda x:x*((self.__Tout-self.__Tin)/self.__temperatureProfile[-1]), self.__temperatureProfile)
 
     #shift it to match Tin
     liquidTemperature = map(lambda x:x+(self.__Tin-liquidTemperature[0]), liquidTemperature)
     
     flowRateKgPerSec = self.__FR/60
+    
+    logging.debug("liquidTemperature after scaling = " + str(liquidTemperature))
+    logging.debug("flowRateKgPerSec = " + str(flowRateKgPerSec))
+    logging.debug("heatCapacity = " + str(self.__heatCapacity))
     
     impedances = []
 
@@ -199,6 +236,8 @@ class Stave:
       heat = (liquidTemperature[i] - liquidTemperature[i+1])*self.__heatCapacity*0.5*flowRateKgPerSec
       averageTempDiff = (liquidTemperature[i]+liquidTemperature[i+1])/2 - regionTemp[i]
       impedances.append(averageTempDiff/heat)
+    
+    logging.debug("impedances = " +str(impedances))
     
     return impedances
   

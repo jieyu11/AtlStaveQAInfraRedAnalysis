@@ -1,7 +1,17 @@
 #!/usr/bin/env python
+
+'''
+impedanceFromCSV.py
+
+Author: Lubos Vozdecky (Queen Mary, University of London)
+About: This program takes a thermal image of an ATLAS Itk Stave Support in CSV format,
+  finds the stave and computes the thermal impedances using data of the cooling fluid saved in parameters.cfg.
+  The program outputs the result impedances into the /data folder as a CSV file.
+'''
+
 import numpy as np
 import cv2
-#import ROOT
+import os
 import csv
 import logging
 import argparse
@@ -31,6 +41,9 @@ except OSError:
   print("Folder called 'debug_output' already exists. Please delete it or rename it.")
   quit()
 
+#set up the debugging log
+if args.debug:
+  logging.basicConfig(filename='debug_output/debug.log',level=logging.DEBUG)
 
 #fetch the CSV file
 logging.debug("Opening the CSV file")
@@ -45,8 +58,9 @@ image = np.array(imgList)
 staveTop = Stave(image, "parameters.cfg",args)
 staveBottom = Stave(image, "parameters.cfg",args)
 
-staveTop.ScaleImage(1)
-staveBottom.ScaleImage(1)
+#scale up the images
+staveTop.ScaleImage(10)
+staveBottom.ScaleImage(10)
 
 #get the scaled image
 img_edges = staveTop.getImage()
@@ -56,6 +70,7 @@ staveTop.FindStaveWithin(0,1.0,0,0.5)
 staveBottom.FindStaveWithin(0,1.0,0.5,1.0)
 
 #print the positions of the staves
+print("Staves' edges found at:")
 staveTop.Echo()
 staveBottom.Echo()
 
@@ -111,25 +126,33 @@ smallBottom = staveBottom.getImpedances("small")
 #adding the small region impedances from top and bottom in parallel:
 smallCombined = list(1/(1/np.array(smallTop) + 1/np.array(smallBottom)))
 
-#plotting
-plt.figure(figsize=(12,6))
-plt.plot(largeTop, label="Large Region: top")
-plt.plot(largeBottom, label="Large Region: bottom")
-plt.plot(smallTop, label="Small Region: top")
-plt.plot(smallBottom, label="Small Region: bottom")
-plt.plot(smallCombined, label="Small Region: combined")
-plt.xlabel("Module number")
-plt.ylabel("Thermal Impedance [C/W]")
-plt.title("Thermal Impedances for the Stave control regions")
-yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom)]))
-plt.xticks(np.arange(0, 28, 1.0))
-plt.yticks(np.arange(0, yrange, 0.5))
-plt.axis([-0.5,27.5,0,yrange])
-plt.grid()
-plt.legend()
-plt.show()
 
-"""
-plt.imshow(img_edges)
-plt.show()
-"""
+#savign data into the CSV file
+outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES"
+print("Outputing data into a file: " + outputFilename + ".csv")
+with open(outputFilename+".csv", "w+") as f:
+  f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion, smallRegionCombined \n")
+  for i in range(0,28):
+    f.write(str(i)+", "+str(largeTop[i])+", "+str(largeBottom[i])+", "+str(smallTop[i])+", "+str(smallBottom[i])+", "+str(smallCombined[i]) + "\n")
+f.close()
+
+
+#plotting if -g option selected
+if args.graphs:
+  plt.figure(figsize=(12,6))
+  plt.plot(largeTop, label="Large Region: top")
+  plt.plot(largeBottom, label="Large Region: bottom")
+  plt.plot(smallTop, label="Small Region: top")
+  plt.plot(smallBottom, label="Small Region: bottom")
+  plt.plot(smallCombined, label="Small Region: combined")
+  plt.xlabel("Module number")
+  plt.ylabel("Thermal Impedance [C/W]")
+  plt.title("Thermal Impedances for the Stave control regions")
+  yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom)]))
+  plt.xticks(np.arange(0, 28, 1.0))
+  plt.yticks(np.arange(0, yrange, 0.5))
+  plt.axis([-0.5,27.5,0,yrange])
+  plt.grid()
+  plt.legend()
+  plt.savefig(outputFilename + ".png")
+  print("Outputing graphical output into a file: " + outputFilename + ".png")
