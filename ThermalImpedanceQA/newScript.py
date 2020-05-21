@@ -43,27 +43,27 @@ image = np.array(imgList)
 
 #creating the staves + loading the parameters from the config file
 staveTop = Stave(image, "parameters.cfg",args)
-#staveBottom = Stave(image, "parameters.cfg",args)
+staveBottom = Stave(image, "parameters.cfg",args)
 
-staveTop.ScaleImage(2)
-#staveBottom.ScaleImage(2)
+staveTop.ScaleImage(1)
+staveBottom.ScaleImage(1)
 
 #get the scaled image
 img_edges = staveTop.getImage()
 
 #finding the staves - triggers an algorithm that looks for the stave, using relative coordinates
 staveTop.FindStaveWithin(0,1.0,0,0.5)
-#staveBottom.FindStaveWithin(0,1.0,0.5,1.0)
+staveBottom.FindStaveWithin(0,1.0,0.5,1.0)
 
 #print the positions of the staves
 staveTop.Echo()
-#staveBottom.Echo()
+staveBottom.Echo()
 
 #create a deep copy of the image, to which the edges/regions will be drawn
 staveTop.DrawEdges(img_edges)
-#staveBottom.DrawEdges(img_edges)
+staveBottom.DrawEdges(img_edges)
 
-"""
+
 numModules = 14
 
 #large regions
@@ -107,15 +107,17 @@ largeTop = staveTop.getImpedances("large")
 largeBottom = staveBottom.getImpedances("large")
 smallTop = staveTop.getImpedances("small")
 smallBottom = staveBottom.getImpedances("small")
-"""
+
+#adding the small region impedances from top and bottom in parallel:
+smallCombined = list(1/(1/np.array(smallTop) + 1/np.array(smallBottom)))
 
 #plotting
-"""
 plt.figure(figsize=(12,6))
 plt.plot(largeTop, label="Large Region: top")
 plt.plot(largeBottom, label="Large Region: bottom")
 plt.plot(smallTop, label="Small Region: top")
 plt.plot(smallBottom, label="Small Region: bottom")
+plt.plot(smallCombined, label="Small Region: combined")
 plt.xlabel("Module number")
 plt.ylabel("Thermal Impedance [C/W]")
 plt.title("Thermal Impedances for the Stave control regions")
@@ -126,7 +128,8 @@ plt.axis([-0.5,27.5,0,yrange])
 plt.grid()
 plt.legend()
 plt.show()
-"""
 
+"""
 plt.imshow(img_edges)
 plt.show()
+"""
