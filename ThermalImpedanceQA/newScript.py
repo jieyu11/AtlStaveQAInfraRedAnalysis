@@ -93,13 +93,28 @@ for i in reversed(range(numModules)):
 
 #small regions above the pipe
 for i in range(numModules):
-  staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
-  staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
-
+  #exception for near-edge regions
+  if i == 0:
+    staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+    staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+  elif i==13:
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+  else:
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+    
 #small regions above the pipe (return pipe)
 for i in reversed(range(numModules)):
-  staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
-  staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+  if i == 0:
+    staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+    staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+  elif i==13:
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+  else:
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
 
 #drawing the regions
 staveBottom.DrawRegions(img_edges,"large")
@@ -123,17 +138,25 @@ largeBottom = staveBottom.getImpedances("large")
 smallTop = staveTop.getImpedances("small")
 smallBottom = staveBottom.getImpedances("small")
 
-#adding the small region impedances from top and bottom in parallel:
-smallCombined = list(1/(1/np.array(smallTop) + 1/np.array(smallBottom)))
+#compute the combined impedance
+smallTopThere = np.array(smallTop[0:14])
+smallTopReturn = np.array(smallTop[14:28])
+impedanceCombinedTop = 1/(1/smallTopThere + 1/smallTopReturn)
 
+smallBottomThere = np.array(smallBottom[0:14])
+smallBottomReturn = np.array(smallBottom[14:28])
+impedanceCombinedBottom = 1/(1/smallBottomThere + 1/smallBottomReturn)
 
 #savign data into the CSV file
 outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES"
 print("Outputing data into a file: " + outputFilename + ".csv")
 with open(outputFilename+".csv", "w+") as f:
-  f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion, smallRegionCombined \n")
+  f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion, smallRegionCombinedTop, smallRegionCombinedBottom \n")
   for i in range(0,28):
-    f.write(str(i)+", "+str(largeTop[i])+", "+str(largeBottom[i])+", "+str(smallTop[i])+", "+str(smallBottom[i])+", "+str(smallCombined[i]) + "\n")
+    if i<14:
+      f.write(str(i)+", "+str(largeTop[i])+", "+str(largeBottom[i])+", "+str(smallTop[i])+", "+str(smallBottom[i]) + ", "+str(impedanceCombinedTop[i]) + ", "+str(impedanceCombinedBottom[i]) + "\n")
+    else:
+      f.write(str(i)+", "+str(largeTop[i])+", "+str(largeBottom[i])+", "+str(smallTop[i])+", "+str(smallBottom[i]) + "\n")
 f.close()
 
 
@@ -144,9 +167,10 @@ if args.graphs:
   plt.plot(largeBottom, label="Large Region: bottom")
   plt.plot(smallTop, label="Small Region: top")
   plt.plot(smallBottom, label="Small Region: bottom")
-  plt.plot(smallCombined, label="Small Region: combined")
-  plt.xlabel("Module number")
-  plt.ylabel("Thermal Impedance [C/W]")
+  plt.plot(impedanceCombinedTop, label="Small Region: top combined")
+  plt.plot(impedanceCombinedBottom, label="Small Region: bottom combined")
+  plt.xlabel("Region number")
+  plt.ylabel("Thermal Impedance [K/W]")
   plt.title("Thermal Impedances for the Stave control regions")
   yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom)]))
   plt.xticks(np.arange(0, 28, 1.0))
@@ -156,3 +180,9 @@ if args.graphs:
   plt.legend()
   plt.savefig(outputFilename + ".png")
   print("Outputing graphical output into a file: " + outputFilename + ".png")
+  
+
+if args.debug:
+  plt.clf()
+  plt.imshow(img_edges)
+  plt.savefig("debug_output/edges.png")
