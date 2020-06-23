@@ -125,14 +125,14 @@ smallTop = staveTop.getImpedances("small")
 #compute the combined impedance
 smallTopThere = np.array(smallTop[0:14])
 smallTopReturn = np.array(smallTop[14:28])
-impedanceCombinedTop = 1/(1/smallTopThere + 1/smallTopReturn)
+impedanceCombinedTop = 1/(1/smallTopThere + 1/np.flip(smallTopReturn))
 
 
 #savign data into the CSV file
 outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES"
 print("Outputing data into a file: " + outputFilename + ".csv")
 with open(outputFilename+".csv", "w+") as f:
-  f.write("#, topLargeRegion, topSmallRegion, smallRegionCombinedTop, smallRegionCombinedBottom \n")
+  f.write("#, topLargeRegion, topSmallRegion, smallRegionCombinedTop \n")
   for i in range(0,28):
     if i<14:
       f.write(str(i)+", "+str(largeTop[i])+", "+str(smallTop[i])+", "+str(impedanceCombinedTop[i]) + "\n")

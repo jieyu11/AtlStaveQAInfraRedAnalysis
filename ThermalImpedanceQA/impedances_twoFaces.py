@@ -144,11 +144,11 @@ smallBottom = staveBottom.getImpedances("small")
 #compute the combined impedance
 smallTopThere = np.array(smallTop[0:14])
 smallTopReturn = np.array(smallTop[14:28])
-impedanceCombinedTop = 1/(1/smallTopThere + 1/smallTopReturn)
+impedanceCombinedTop = 1/(1/smallTopThere + 1/np.flip(smallTopReturn))
 
 smallBottomThere = np.array(smallBottom[0:14])
 smallBottomReturn = np.array(smallBottom[14:28])
-impedanceCombinedBottom = 1/(1/smallBottomThere + 1/smallBottomReturn)
+impedanceCombinedBottom = 1/(1/smallBottomThere + 1/np.flip(smallBottomReturn))
 
 #savign data into the CSV file
 outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES"
