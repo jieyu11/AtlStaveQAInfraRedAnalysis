@@ -95,26 +95,26 @@ for i in reversed(range(numModules)):
 for i in range(numModules):
   #exception for near-edge regions
   if i == 0:
-    staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
-    staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+    staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
+    staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
   elif i==13:
-    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.28260-0.03478,0.28260+0.03478,"small")
-    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.247826,0.317391,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.247826,0.317391,"small")
   else:
-    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
-    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.28260-0.03478,0.28260+0.03478,"small")
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
     
 #small regions above the pipe (return pipe)
 for i in reversed(range(numModules)):
   if i == 0:
-    staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
-    staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+    staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
+    staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
   elif i==13:
-    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
-    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.682609,0.752174,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.682609,0.752174,"small")
   else:
-    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
-    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5+0.28260-0.03478,0.5+0.28260+0.03478,"small")
+    staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
 
 #drawing the regions
 staveBottom.DrawRegions(img_edges,"large")
