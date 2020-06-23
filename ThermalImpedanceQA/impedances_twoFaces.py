@@ -128,7 +128,10 @@ staveTopTemp = staveTop.getTemperatures("small")
 
 
 #using the temperature profile provided by the FEA (otherwise a linear extrapolation would be used)
-temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1.0]
+#temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1.0]
+#FEA:
+temperatureProfile = [0.000,0.060,0.109,0.143,0.178,0.213,0.247,0.281,0.316,0.350,0.384,0.418,0.451,0.485,0.520,0.555,0.589,0.623,0.657,0.691,0.725,0.760,0.794,0.828,0.862,0.896,0.930,0.965,1.000]
+
 staveBottom.setTemperatureProfile(temperatureProfile)
 staveTop.setTemperatureProfile(temperatureProfile)
 
