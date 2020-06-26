@@ -107,9 +107,9 @@ for i in range(numModules):
     if not(args.one_face):
       staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
   elif i==13:
-    staveTop.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.247826,0.317391,0.13,0.0869565,"small",bend="downwards")
+    staveTop.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.247826,0.317391,0.13,0.0869565,"small",bend="downwards")
     if not(args.one_face):
-      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.247826,0.317391,0.13,0.0869565,"small",bend="downwards")
+      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.247826,0.317391,0.13,0.0869565,"small",bend="downwards")
   else:
     staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
     if not(args.one_face):
@@ -122,9 +122,9 @@ for i in reversed(range(numModules)):
     if not(args.one_face):
       staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
   elif i==13:
-    staveTop.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.682609,0.752174,0.13,0.0869565,"small",bend="upwards")
+    staveTop.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.682609,0.752174,0.13,0.0869565,"small",bend="upwards")
     if not(args.one_face):
-      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.5/numModules,0.682609,0.752174,0.13,0.0869565,"small",bend="upwards")
+      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.682609,0.752174,0.13,0.0869565,"small",bend="upwards")
   else:
     staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
     if not(args.one_face):
