@@ -165,13 +165,82 @@ class Stave:
 	  self.__regions[type] = []
 	  self.__regions[type].append(newRegion)
 	
+  def AddUBendRegion(self, rxLeft, rxRight, ryTop, ryBottom, rradius, rlength, type, bend="downwards"):
+    if not self.__staveFound:
+      logging.error("Defining region for a stave that has not been found.")
+      raise Exception("Cannot define a region for stave that has not been found.")
+    
+    if len(list(filter(lambda x : x > 1.0 or x < 0.0, [rxLeft, rxRight, ryTop, ryBottom]))) > 0:
+      logging.error("Invalid coordinates for a region. [xLeft,xRight,yTop,yBottom] = " + str([rxLeft, rxRight, ryTop, ryBottom]))
+      raise Exception("Regions are defined by relative coordinates w.r.t. the stave. The coordinates must be between 0.0 and 1.0.")
+    
+    if not(rxLeft < rxRight and ryTop < ryBottom):
+      logging.error("Invalid coordinates for a region. [xLeft,xRight,yTop,yBottom] = " + str([rxLeft, rxRight, ryTop, ryBottom]))
+      raise Exception("The coordiates for the region are invalid.")
+    
+    if not(bend=="downwards" or bend=="upwards"):
+      logging.error("Invalid  argument bend = " + bend)
+      raise Exception("Invalid  argument bend.")
+    
+    logging.debug("Adding a new region of type '" + str(type) + "': [xLeft,xRight,yTop,yBottom] = " + str([rxLeft, rxRight, ryTop, ryBottom]))
+    
+    #coordinates of the first "starting" rectangle
+    xLeft1 = int(self.__xLeft + rxLeft*self.__length)
+    yTop1 = int(self.__yTop + ryTop*self.__width)
+    xRight1 = int(self.__xLeft + rxRight*self.__length)
+    yBottom1 = int(self.__yTop + ryBottom*self.__width)
+    
+    
+    radius = int(rradius*self.__width)
+    
+    thickness = int(yBottom1-yTop1)
+    centreX = int(xRight1)
+    
+    if bend=="upwards":
+      centreY = int(0.5*(yTop1+yBottom1)-rradius*self.__width)
+    else:
+      centreY = int(0.5*(yTop1+yBottom1)+rradius*self.__width)
+    
+    xLeft2 = int(xRight1 + radius - thickness/2)
+    xRight2 = int(xLeft2 + thickness)
+    
+    if bend=="upwards":
+      yTop2 = int(yBottom1 - radius - thickness/2)
+      yBottom2 = int(yTop2 - rlength*self.__width)
+    else:
+      yTop2 = int(yBottom1 + radius - thickness/2)
+      yBottom2 = int(yTop2 + rlength*self.__width)
+    
+    
+    if bend=="upwards":
+      start_angle, stop_angle = 0, 90
+    else:
+      start_angle, stop_angle = 270, 360
+    
+    shape = np.shape(self.__globalImg)
+    
+    regions_image = np.zeros([shape[0],shape[1]])
+
+    regions_image = cv2.rectangle(regions_image, (xLeft1,yTop1), (xRight1,yBottom1), 1, -1) 
+
+    regions_image=cv2.ellipse(regions_image, (centreX,centreY), (radius,radius), 0, start_angle, stop_angle, 1, thickness)
+
+    regions_image = cv2.rectangle(regions_image, (xLeft2,yTop2), (xRight2,yBottom2), 1, -1) 
+    
+    newRegion = GeneralRegion(self.__globalImg, regions_image)
+    
+    if type in self.__regions:
+      self.__regions[type].append(newRegion)
+    else:
+	  self.__regions[type] = []
+	  self.__regions[type].append(newRegion)
+	
   def Echo(self):
     if self.__staveFound:
       print(str([self.__xLeft,self.__xRight,self.__yTop,self.__yBottom]))
     else:
       raise("Stave has not been found yet.")
-    
-   
+
   def PrintRegions(self,regionType):
     for region in self.__regions[regionType]:
 	    region.Echo()
@@ -188,8 +257,7 @@ class Stave:
 	
   def DrawRegions(self,imgToBeImprinted,regionType):
     for region in self.__regions[regionType]:
-      position = region.getPosition()
-      cv2.rectangle(imgToBeImprinted,(int(position[0]),int(position[2])),(int(position[1]),int(position[3])),(0,0,0),thickness=self.__lineThickness)
+      region.DrawRegion(imgToBeImprinted,self.__lineThickness)
     return
     
   def DrawEdges(self,img):
@@ -259,5 +327,28 @@ class Region:
   def Echo(self):
     print(str([self.__xLeft,self.__xRight,self.__yTop,self.__yBottom]))
     
+  def DrawRegion(self, imgToBeImprinted, thickness):
+    cv2.rectangle(imgToBeImprinted,(int(self.__xLeft),int(self.__yTop)),(int(self.__xRight),int(self.__yBottom)),(0,0,0),thickness=thickness)
+    
 
+#added for implementing the U-bend regions
+class GeneralRegion:
+  def __init__(self, globalImg, regionImg):
+    self.__globalImg = globalImg
+    self.__regionImg = regionImg
+    
+    selected_regions = globalImg*regionImg
+    totalSum = np.sum(selected_regions)
+    numberNonzero = len(np.nonzero(selected_regions)[0])
 
+    self.__averageTemperature = totalSum/numberNonzero
+    
+  def getAverageTemperature(self):
+    return self.__averageTemperature
+    
+  def getPosition(self):
+    return [np.min(np.nonzero(selected_regions)[1]),np.max(np.nonzero(selected_regions)[1]), np.min(np.nonzero(selected_regions)[0]),np.max(np.nonzero(selected_regions)[0])]
+    
+  def DrawRegion(self, imgToBeImprinted, thickness):
+    #update the value, not the reference -> use [:]
+    imgToBeImprinted[:] = imgToBeImprinted + 100*self.__regionImg
