@@ -44,6 +44,12 @@ if args.debug:
 if args.debug:
   logging.basicConfig(filename='debug_output/debug.log',level=logging.DEBUG)
 
+
+gitHash = os.popen('git rev-parse --short HEAD').read()[:-2]
+gitDate = os.popen('git log -1 --format=%cd').read()
+
+logging.debug("Running the code version: " + gitHash + " " + gitDate)
+
 #fetch the CSV file
 logging.debug("Opening the CSV file")
 imgList = []
@@ -215,6 +221,7 @@ if args.graphs:
   plt.axis([-0.5,27.5,0,yrange])
   plt.grid()
   plt.legend()
+  plt.text(0, -0.85, "Code version: " + gitHash + " " + gitDate[:-6], fontsize=10)
   plt.savefig(outputFilename + ".png")
   print("Outputing graphical output into a file: " + outputFilename + ".png")
   
