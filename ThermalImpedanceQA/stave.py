@@ -162,8 +162,8 @@ class Stave:
     if type in self.__regions:
       self.__regions[type].append(newRegion)
     else:
-	  self.__regions[type] = []
-	  self.__regions[type].append(newRegion)
+      self.__regions[type] = []
+      self.__regions[type].append(newRegion)
 	
   def AddUBendRegion(self, rxLeft, rxRight, ryTop, ryBottom, rradius, rlength, type, bend="downwards"):
     if not self.__staveFound:
@@ -232,8 +232,8 @@ class Stave:
     if type in self.__regions:
       self.__regions[type].append(newRegion)
     else:
-	  self.__regions[type] = []
-	  self.__regions[type].append(newRegion)
+      self.__regions[type] = []
+      self.__regions[type].append(newRegion)
 	
   def Echo(self):
     if self.__staveFound:
@@ -338,6 +338,7 @@ class GeneralRegion:
     self.__regionImg = regionImg
     
     selected_regions = globalImg*regionImg
+    self.__selected_regions = selected_regions
     totalSum = np.sum(selected_regions)
     numberNonzero = len(np.nonzero(selected_regions)[0])
 
@@ -347,7 +348,7 @@ class GeneralRegion:
     return self.__averageTemperature
     
   def getPosition(self):
-    return [np.min(np.nonzero(selected_regions)[1]),np.max(np.nonzero(selected_regions)[1]), np.min(np.nonzero(selected_regions)[0]),np.max(np.nonzero(selected_regions)[0])]
+    return [np.min(np.nonzero(self.__selected_regions)[1]),np.max(np.nonzero(self.__selected_regions)[1]), np.min(np.nonzero(self.__selected_regions)[0]),np.max(np.nonzero(self.__selected_regions)[0])]
     
   def DrawRegion(self, imgToBeImprinted, thickness):
     #update the value, not the reference -> use [:]
