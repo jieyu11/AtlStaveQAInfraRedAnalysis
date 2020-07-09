@@ -286,10 +286,10 @@ class Stave:
     logging.debug("Scaling the temperature profile accoreding to [Tout,Tin] = " + str([self.__Tout,self.__Tin]))
     
     #scale it up
-    liquidTemperature = map(lambda x:x*((self.__Tout-self.__Tin)/self.__temperatureProfile[-1]), self.__temperatureProfile)
+    liquidTemperature = list(map(lambda x:x*((self.__Tout-self.__Tin)/self.__temperatureProfile[-1]), self.__temperatureProfile))
 
     #shift it to match Tin
-    liquidTemperature = map(lambda x:x+(self.__Tin-liquidTemperature[0]), liquidTemperature)
+    liquidTemperature = list(map(lambda x:x+(self.__Tin-liquidTemperature[0]), liquidTemperature))
     
     flowRateKgPerSec = self.__FR/60
     
