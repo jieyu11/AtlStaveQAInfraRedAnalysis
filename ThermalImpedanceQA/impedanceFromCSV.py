@@ -221,7 +221,7 @@ if args.graphs:
   plt.axis([-0.5,27.5,0,yrange])
   plt.grid()
   plt.legend()
-  plt.text(0, -0.85, "Code version: " + gitHash + " " + gitDate[:-6], fontsize=10)
+  plt.text(0, -0.13*yrange, "Code version: " + gitHash + " " + gitDate[:-6], fontsize=10)
   plt.savefig(outputFilename + ".png")
   print("Outputing graphical output into a file: " + outputFilename + ".png")
   
