@@ -1,5 +1,0 @@
-Debugger entered--Lisp error: (error "No mark set in this buffer")
-  signal(error ("No mark set in this buffer"))
-  error("No mark set in this buffer")
-  exchange-point-and-mark(nil)
-  call-interactively(exchange-point-and-mark nil nil)
