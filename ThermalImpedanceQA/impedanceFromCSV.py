@@ -10,7 +10,6 @@ About: This program takes a thermal image of an ATLAS Itk Stave Support in CSV f
 '''
 
 import numpy as np
-import cv2
 import os
 import csv
 import logging
@@ -184,7 +183,10 @@ if not(args.one_face):
 outputFilename = "output/" + inputFile.split("/")[-1][:-4] + "_IMPEDANCES"
 print("Outputing data into a file: " + outputFilename + ".csv")
 with open(outputFilename+".csv", "w+") as f:
-  f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion, smallRegionCombinedTop, smallRegionCombinedBottom \n")
+  if args.one_face:
+    f.write('#, topLargeRegion, topSmallRegion, smallRegionCombinedTop \n')
+  else:
+    f.write("#, topLargeRegion, bottomLargeRegion, topSmallRegion, bottomSmallRegion, smallRegionCombinedTop, smallRegionCombinedBottom \n")
   for i in range(0,28):
     if i<14:
       if args.one_face:
