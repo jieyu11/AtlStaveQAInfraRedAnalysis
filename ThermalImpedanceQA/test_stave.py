@@ -8,7 +8,8 @@ Testing script for the Stave class.
 """
 import pytest
 import numpy as np
-from stave import Region, GeneralRegion
+from stave import Region, GeneralRegion, Stave
+
 
 def test_region():
   global_image = 18*np.ones([100,200])
@@ -42,13 +43,14 @@ def test_generalRegion():
   assert region_30.getAverageTemperature() == 30
   assert region_18.getAverageTemperature() == 18
 
-"""
+
 @pytest.fixture
 def wrongRatioStave():
   global_image = 18*np.ones([1240,3160])
   region_image = 30*np.ones([270,3000])
   global_image[400:670,80:3080] = region_image
-  return global_image
+  mystave = Stave(global_image, "parameters.cfg")
+  return mystave
 
 @pytest.fixture
 def correctRatioStave():
@@ -56,7 +58,44 @@ def correctRatioStave():
   region_image = 30*np.ones([251,3000])
   global_image[400:651,80:3080] = region_image
   mystave = Stave(global_image, "parameters.cfg")
-  return global_image
+  return mystave
 
-def test_ratio(wrongRatioStave,correctRatioStave):
-"""
+def test_ratio(wrongRatioStave, correctRatioStave):
+  
+  with pytest.raises(Exception):
+    correctRatioStave.Echo()
+    
+  with pytest.raises(Exception):
+    wrongRatioStave.Echo()
+  
+  with pytest.raises(Exception):
+    wrongRatioStave.FindStaveWithin(0.0,1.0,0.0,1.0)
+  
+  correctRatioStave.FindStaveWithin(0.0,1.0,0.0,1.0)
+  
+  correctRatioStave.Echo()
+  
+def test_addingRegions(correctRatioStave):  
+  correctRatioStave.FindStaveWithin(0.0,1.0,0.0,1.0)
+  
+  correctRatioStave.AddRegion(0.2,0.3,0.1,0.6,"type A")
+  correctRatioStave.AddRegion(0.5,0.64,0.14,0.23,"type A")
+  correctRatioStave.AddRegion(0.1,0.9,0.1,0.6,"type A")
+  correctRatioStave.AddRegion(0.2,0.3,0.3,0.6,"type A")
+  
+  with pytest.raises(Exception):
+    correctRatioStave.AddRegion(0.1,0.0,0.1,0.3,"type A")
+  
+  with pytest.raises(Exception):
+    correctRatioStave.AddRegion(0.1,-0.6,0.1,0.3,"type A")
+  
+  with pytest.raises(Exception):
+    correctRatioStave.AddRegion(-0.1,0.6,0.1,0.3,"type A")
+  
+  correctRatioStave.AddRegion(0.2,0.3,0.1,0.6,"")
+  correctRatioStave.AddRegion(0.5,0.64,0.14,0.23,"")
+  
+  temps = np.array(correctRatioStave.getTemperatures("type A"))
+  
+  assert len(temps[temps!=30]) == 0
+  
