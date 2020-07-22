@@ -25,6 +25,7 @@ parser.add_argument("-g","--graphs", help="Outputs the graph", action="store_tru
 parser.add_argument("-1f","--one_face", help="Using IR image with one face only", action="store_true")
 args = parser.parse_args()
 
+
 inputFile = args.path
 
 #check if the suffix is .csv
@@ -59,9 +60,9 @@ with open(inputFile) as csvfile:
 image = np.array(imgList)
 
 #creating the staves + loading the parameters from the config file
-staveTop = Stave(image, "parameters.cfg",args)
+staveTop = Stave(image, "parameters.cfg")
 if not(args.one_face):
-  staveBottom = Stave(image, "parameters.cfg",args)
+  staveBottom = Stave(image, "parameters.cfg")
 
 #scale up the images
 staveTop.ScaleImage(10)

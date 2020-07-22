@@ -13,12 +13,11 @@ import os
 import cv2
 import configparser
 import numpy as np
-import math
 from matplotlib import pyplot as plt
 
 class Stave:
   
-  def __init__(self,globalImg, configFile, args):
+  def __init__(self,globalImg, configFile):
     self.__globalImg = globalImg
     self.__staveFound = False
     self.__xLeft = 0
@@ -26,7 +25,6 @@ class Stave:
     self.__yTop = 0
     self.__yBottom = 0
     self.__regions = {} # dictionary
-    self.__args = args
     self.__staveRatio = 11.957 #length:width ratio for sanity check
     self.__staveRatioTolerance = 0.05 # 5% tolerance on the stave length/width ratio
     self.__lineThickness = 2 #thickness of the line that is used for drawing the regions
@@ -76,10 +74,6 @@ class Stave:
     
     imgOfInterest = self.__globalImg[yMin:yMax,xMin:xMax]
     logging.debug("Looking for the stave within: " + str([yMin,yMax,xMin,xMax]))
-    
-    
-    xPixels = imgOfInterest.shape[0]
-    yPixels = imgOfInterest.shape[1]
     
     gradient = np.gradient(imgOfInterest,axis=0)
     
