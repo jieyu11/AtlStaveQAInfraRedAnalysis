@@ -99,3 +99,32 @@ def test_addingRegions(correctRatioStave):
   
   assert len(temps[temps!=30]) == 0
   
+def test_addingUBendRegions(correctRatioStave):
+  
+  with pytest.raises(Exception):
+    correctRatioStave.AddUBendRegion(0.1, 0.2, 0.1, 0.5, 0.1, 0.1, "type X", bend="downwards")
+  
+  
+  correctRatioStave.FindStaveWithin(0.0,1.0,0.0,1.0)
+  
+  with pytest.raises(Exception):
+    correctRatioStave.AddUBendRegion(0.1, 0.12, 0.1, 0.2, 0.1, 0.1, "type X", bend="nonexsitent_atribute")
+  
+  correctRatioStave.AddUBendRegion(0.1, 0.12, 0.1, 0.2, 0.1, 0.1, "type X", bend="downwards")
+  correctRatioStave.AddUBendRegion(0.1, 0.12, 0.1, 0.2, 0.1, 0.1, "type Y", bend="downwards")
+  
+  correctRatioStave.AddUBendRegion(0.1, 0.12, 0.8, 0.9, 0.1, 0.1, "type X", bend="upwards")
+  correctRatioStave.AddUBendRegion(0.1, 0.12, 0.8, 0.9, 0.1, 0.1, "type Y", bend="upwards")
+
+  # MAYBE ADD SOME MORE ATRIBUTE COMBINATIONS HERE
+  
+
+  with pytest.raises(Exception):
+    correctRatioStave.getTemperatures("type blabla_nonexistent")
+  
+  temps_X = np.array(correctRatioStave.getTemperatures("type X"))
+  temps_Y = np.array(correctRatioStave.getTemperatures("type Y"))
+  
+  assert len(temps_X[temps_X!=30]) == 0
+  assert len(temps_Y[temps_Y!=30]) == 0
+  
