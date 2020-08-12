@@ -49,7 +49,7 @@ def wrongRatioStave():
   global_image = 18*np.ones([1240,3160])
   region_image = 30*np.ones([270,3000])
   global_image[400:670,80:3080] = region_image
-  mystave = Stave(global_image, "parameters.cfg")
+  mystave = Stave(global_image, "parameters/water-default.cfg")
   return mystave
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def correctRatioStave():
   global_image = 18*np.ones([1240,3160])
   region_image = 30*np.ones([251,3000])
   global_image[400:651,80:3080] = region_image
-  mystave = Stave(global_image, "parameters.cfg")
+  mystave = Stave(global_image, "parameters/water-default.cfg")
   return mystave
 
 def test_ratio(wrongRatioStave, correctRatioStave):

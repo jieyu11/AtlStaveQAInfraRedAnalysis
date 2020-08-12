@@ -20,6 +20,7 @@ from stave import Stave
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path", help="The path to the input CSV file")
+parser.add_argument("config", help="The path to the configuration file")
 parser.add_argument("-d","--debug", help="Runs the code in debug mode", action="store_true")
 parser.add_argument("-g","--graphs", help="Outputs the graph", action="store_true")
 parser.add_argument("-1f","--one_face", help="Using IR image with one face only", action="store_true")
@@ -27,6 +28,7 @@ args = parser.parse_args()
 
 
 inputFile = args.path
+configFile = args.config
 
 #check if the suffix is .csv
 if inputFile[-3:] != "csv":
@@ -63,9 +65,9 @@ with open(inputFile) as csvfile:
 image = np.array(imgList)
 
 #creating the staves + loading the parameters from the config file
-staveTop = Stave(image, "parameters.cfg")
+staveTop = Stave(image, configFile)
 if not(args.one_face):
-  staveBottom = Stave(image, "parameters.cfg")
+  staveBottom = Stave(image, configFile)
 
 #scale up the images
 staveTop.ScaleImage(10)
