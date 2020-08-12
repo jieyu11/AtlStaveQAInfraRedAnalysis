@@ -39,6 +39,9 @@ if args.debug:
     os.system("rm -r debug_output")
   os.mkdir("debug_output")
 
+#create the output folder if it doesn't exist
+if not "output" in os.listdir("."):
+  os.system("mkdir output")
 
 #set up the debugging log
 if args.debug:
