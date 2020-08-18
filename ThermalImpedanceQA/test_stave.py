@@ -49,7 +49,7 @@ def wrongRatioStave():
   global_image = 18*np.ones([1240,3160])
   region_image = 30*np.ones([270,3000])
   global_image[400:670,80:3080] = region_image
-  mystave = Stave(global_image, "parameters/water-default.cfg")
+  mystave = Stave(global_image, "parameters/param-for-testing.cfg")
   return mystave
 
 @pytest.fixture
@@ -57,7 +57,7 @@ def correctRatioStave():
   global_image = 18*np.ones([1240,3160])
   region_image = 30*np.ones([251,3000])
   global_image[400:651,80:3080] = region_image
-  mystave = Stave(global_image, "parameters/water-default.cfg")
+  mystave = Stave(global_image, "parameters/param-for-testing.cfg")
   return mystave
 
 def test_ratio(wrongRatioStave, correctRatioStave):
@@ -127,4 +127,24 @@ def test_addingUBendRegions(correctRatioStave):
   
   assert len(temps_X[temps_X!=30]) == 0
   assert len(temps_Y[temps_Y!=30]) == 0
+
+def test_impedances(correctRatioStave):
+  correctRatioStave.FindStaveWithin(0.0,1.0,0.0,1.0)
+  
+  correctRatioStave.AddUBendRegion(0.1, 0.12, 0.1, 0.2, 0.1, 0.1, "type A", bend="downwards")
+  correctRatioStave.AddRegion(0.2,0.3,0.1,0.6,"type A")
+  correctRatioStave.AddRegion(0.5,0.64,0.14,0.23,"type A")
+  correctRatioStave.AddRegion(0.1,0.9,0.1,0.6,"type A")
+  correctRatioStave.AddRegion(0.2,0.3,0.3,0.6,"type A")
+  
+  tempProfile = [100,80,60,40,20,0]
+  impedances = []
+  for i in range(0,5):
+    average_temp = (tempProfile[i]+tempProfile[i+1])/2
+    flow_kgPerSec = 1.0/60.0
+    heat = abs(tempProfile[i+1] - tempProfile[i])*100*0.5*flow_kgPerSec
+    impedances.append(abs(average_temp-30)/heat)
+    
+  assert(correctRatioStave.getImpedances("type A") == impedances)
+  
   

@@ -275,10 +275,10 @@ class Stave:
     logging.debug("Scaling the temperature profile accoreding to [Tout,Tin] = " + str([self.__Tout,self.__Tin]))
     
     #scale it up
-    liquidTemperature = list(map(lambda x:x*((self.__Tout-self.__Tin)/self.__temperatureProfile[-1]), self.__temperatureProfile))
+    liquidTemperature = [x*(self.__Tout-self.__Tin)/self.__temperatureProfile[-1] for x in self.__temperatureProfile]
 
     #shift it to match Tin
-    liquidTemperature = list(map(lambda x:x+(self.__Tin-liquidTemperature[0]), liquidTemperature))
+    liquidTemperature = [x+(self.__Tin-liquidTemperature[0]) for x in liquidTemperature]
     
     flowRateKgPerSec = self.__FR/60
     
@@ -287,11 +287,15 @@ class Stave:
     logging.debug("heatCapacity = " + str(self.__heatCapacity))
     
     impedances = []
+    
+    if not len(regionTemp)+1==len(liquidTemperature):
+      logging.error("The number of temperature profile data points does not match the number of regions.")
+      raise Exception("The number of temperature profile data points does not match the number of regions.")
 
-    for i in range(0,28):
+    for i in range(0,len(regionTemp)):
       #divide by two to get the heat only for one part
-      heat = (liquidTemperature[i] - liquidTemperature[i+1])*self.__heatCapacity*0.5*flowRateKgPerSec
-      averageTempDiff = (liquidTemperature[i]+liquidTemperature[i+1])/2 - regionTemp[i]
+      heat = abs(liquidTemperature[i] - liquidTemperature[i+1])*self.__heatCapacity*0.5*flowRateKgPerSec
+      averageTempDiff = abs((liquidTemperature[i]+liquidTemperature[i+1])/2 - regionTemp[i])
       impedances.append(averageTempDiff/heat)
     
     logging.debug("impedances = " +str(impedances))
