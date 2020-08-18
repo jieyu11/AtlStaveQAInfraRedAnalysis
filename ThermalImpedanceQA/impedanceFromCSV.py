@@ -156,17 +156,6 @@ if not(args.one_face):
   staveBottomTemp = staveBottom.getTemperatures("small")
 
 
-
-#using the temperature profile provided by the FEA (otherwise a linear extrapolation would be used)
-#temperatureProfile = [0,0.062,0.114,0.152,0.188,0.224,0.26,0.295,0.33,0.364,0.398,0.432,0.466,0.499,0.533,0.568,0.603,0.637,0.672,0.706,0.74,0.774,0.807,0.841,0.873,0.906,0.937,0.969,1.0]
-#FEA:
-temperatureProfile = [0.000,0.060,0.108,0.143,0.178,0.212,0.247,0.282,0.316,0.351,0.385,0.419,0.453,0.487,0.522,0.557,0.591,0.625,0.659,0.693,0.727,0.761,0.795,0.829,0.863,0.897,0.931,0.965,1.000]
-
-
-staveTop.setTemperatureProfile(temperatureProfile)
-if not(args.one_face):
-  staveBottom.setTemperatureProfile(temperatureProfile)
-
 #extracting the impedances
 largeTop = staveTop.getImpedances("large")
 smallTop = staveTop.getImpedances("small")

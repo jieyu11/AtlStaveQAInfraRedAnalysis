@@ -42,16 +42,11 @@ class Stave:
     self.__Tout = float(config["Default"]["temp_out"])
     self.__heatCapacity = float(config["Default"]["c_liquid"])
     self.__FR = float(config["Default"]["flow_rate"])
+    self.__temperatureProfile = [float(x) for x in config["Default"]["temperatureProfile"].split(",")]
     
     #print the imported variables
     for variable in config.items("Default"):
       logging.debug(variable[0] + " = " + variable[1])
-      
-    #default temperature profile of the cooling liquid (linear extraploation)
-    self.__temperatureProfile = [x/28.0 for x in list(range(0,29))]
-    
-    logging.debug("Setting the temperature profile to the linear extrapolation by default")
-    logging.debug("temperatureProfile = " + str(self.__temperatureProfile))
     
   def FindStaveWithin(self, relXMin, relXMax, relYMin, relYMax):
     if relXMin > relXMax or relYMin > relYMax:
