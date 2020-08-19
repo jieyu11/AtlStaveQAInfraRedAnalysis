@@ -1,10 +1,10 @@
 # ITk Stave Impedance Quality Control
 
-This code takes an IR image (in the CSV format) of a stave as the input and outputs the thermal impedances of paths between the cooling pipe and the surface in selected regions.
+This code takes an IR image (in the CSV format) of a stave and outputs the thermal impedances of the thermal heat paths between the cooling pipe and the surface in selected regions.
 
 
 ## Dependencies
-* Anaconda (for pytest, numpy, configparsers etc.)
+* Anaconda 3 (for pytest, numpy, configparsers etc.)
 * OpenCV
 
 ## Installation
@@ -16,7 +16,7 @@ First initialize Anaconda:
 ```bash
 conda init bash
 ```
-And set the auto-activation to false to prevent Anaconda initializing automatically whenever a shell is started:
+And set the auto-activation to false to prevent Anaconda initializing automatically whenever a new shell window is opened:
 ```bash
 conda config --set auto_activate_base false
 ```
@@ -36,14 +36,13 @@ conda update --all
 Some required packages won't be in the default Anaconda envirnoment and they need to be installed:
 ```bash
 conda install opencv
-conda
 ```
 
-Finally to make sure your python version is 3.8.5 or newer
+Finally make sure your python version is 3.8.5 or newer
 ```bash
 python --version
 ```
-and all dependencies are correclty installed type:
+and all dependencies are correclty installed:
 ```bash
 python test_dependencies.py
 ```
@@ -85,5 +84,5 @@ python impedanceFromCSV.py data/CSV_with_0.92_emmy.csv parameters/water-default.
 python impedanceFromCSV.py data/FEA_with_honeycomb.csv parameters/water-default.cfg -1f -g 
 ```
 
-##Contact
+## Contact
 If you have any questions, please do not hesitate to contact me via email at l.vozdecky@qmul.ac.uk.
