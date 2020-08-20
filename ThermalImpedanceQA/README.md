@@ -84,5 +84,11 @@ python impedanceFromCSV.py data/CSV_with_0.92_emmy.csv parameters/water-default.
 python impedanceFromCSV.py data/FEA_with_honeycomb.csv parameters/water-default.cfg -1f -g 
 ```
 
+## Testing
+Before commiting any changes make sure the modified version passes all tests by runnning pytest in this folder:
+```bash
+pytest
+```
+
 ## Contact
 If you have any questions, please do not hesitate to contact me via email at l.vozdecky@qmul.ac.uk.
