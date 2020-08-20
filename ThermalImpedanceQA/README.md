@@ -44,7 +44,7 @@ python --version
 ```
 and all dependencies are correclty installed:
 ```bash
-python test_dependencies.py
+./test_dependencies.py
 ```
 If you get no errors you are good to go.
 
@@ -55,7 +55,7 @@ conda actiavte
 ```
 
 ```
-usage: python impedanceFromCSV.py [-h] [-g] [-1f] [-d]
+usage: ./impedanceFromCSV.py [-h] [-g] [-1f] [-d]
                           path_to_image parameters_file
 ```
 
@@ -78,14 +78,14 @@ Optional arguments:
 
 Examples:
 ```bash
-python impedanceFromCSV.py data/CSV_with_0.92_emmy.csv parameters/water-default.cfg -g
+./impedanceFromCSV.py data/CSV_with_0.92_emmy.csv parameters/water-default.cfg -g
 ```
 ```bash
-python impedanceFromCSV.py data/FEA_with_honeycomb.csv parameters/water-default.cfg -1f -g 
+./impedanceFromCSV.py data/FEA_with_honeycomb.csv parameters/water-default.cfg -1f -g 
 ```
 
 ## Testing
-Before commiting any changes make sure the modified version passes all tests by runnning pytest in this folder:
+Before committing any changes make sure the modified version passes all the tests by runnning pytest in this folder:
 ```bash
 pytest
 ```
