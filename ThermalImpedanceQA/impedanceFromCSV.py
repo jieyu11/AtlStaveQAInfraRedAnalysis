@@ -49,7 +49,7 @@ if not "output" in os.listdir("."):
 if args.debug:
   logging.basicConfig(filename='debug_output/debug.log',level=logging.DEBUG)
 
-
+#get the git version of the code so it can be printed on the output graphs
 gitHash = os.popen('git rev-parse --short HEAD').read()[:-2]
 gitDate = os.popen('git log -1 --format=%cd').read()
 
@@ -69,12 +69,12 @@ staveTop = Stave(image, configFile)
 if not(args.one_face):
   staveBottom = Stave(image, configFile)
 
-#scale up the images
+#scale up the images with linear extrapolation to get better results for small regions
 staveTop.ScaleImage(10)
 if not(args.one_face):
   staveBottom.ScaleImage(10)
 
-#get the scaled image
+#get the scaled image; it's used later for showing the regions for debugging
 img_edges = staveTop.getImage()
 
 #finding the staves - triggers an algorithm that looks for the stave, using relative coordinates
@@ -128,6 +128,7 @@ for i in range(numModules):
     
 #small regions above the pipe (return pipe)
 for i in reversed(range(numModules)):
+  #exception for near-edge regions
   if i == 0:
     staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
     if not(args.one_face):
@@ -142,7 +143,6 @@ for i in reversed(range(numModules)):
       staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
 
 #drawing the regions
-
 staveTop.DrawRegions(img_edges,"large")
 staveTop.DrawRegions(img_edges,"small")
 

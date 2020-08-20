@@ -29,7 +29,6 @@ class Stave:
     self.__staveRatioTolerance = 0.05 # 5% tolerance on the stave length/width ratio
     self.__lineThickness = 2 #thickness of the line that is used for drawing the regions
     
-
     #importing data from the config file
     if not os.path.isfile(configFile):
       raise Exception("Could not find config file '" + configFile + "'")
@@ -37,7 +36,7 @@ class Stave:
     logging.debug("Importing variables from config file " + configFile + ":")
     config = configparser.ConfigParser()
     config.read(configFile)
-
+    
     self.__Tin = float(config["Default"]["temp_in"])
     self.__Tout = float(config["Default"]["temp_out"])
     self.__heatCapacity = float(config["Default"]["c_liquid"])
@@ -70,6 +69,13 @@ class Stave:
     imgOfInterest = self.__globalImg[yMin:yMax,xMin:xMax]
     logging.debug("Looking for the stave within: " + str([yMin,yMax,xMin,xMax]))
     
+    #algorithm for finding the stave within the region of interest:
+    # 1. take gradiant along the y-axis
+    # 2. sum along the x-axis
+    # 3. look for the positive/negative peaks corresponding to top/bottom edge of stave
+    # the positive/negative peaks are found by taking max and min
+    # 4. find the left and right edges similarly by only considering the strip between the top/bottom edges
+    
     gradient = np.gradient(imgOfInterest,axis=0)
     
     projection = np.sum(gradient, axis=1)
@@ -93,13 +99,14 @@ class Stave:
     ratioMeasured = abs(1.0*(rightEdge-leftEdge)/(lowerEdge-upperEdge))
     logging.debug("ratioMeasured = " +str(ratioMeasured))
     
-    
+    #sanity check of the dimensions of the found stave
     if abs(self.__staveRatio - ratioMeasured)/self.__staveRatio > self.__staveRatioTolerance:
       logging.error("Ratio test FAILED")
       raise Exception("Ratio of the found stave is not within the limits.")
     
     logging.debug("Ratio test PASSED")
     
+    #calculate the coordinates of the stave edges in the global image
     self.__xLeft = leftEdge + xMin
     self.__xRight = rightEdge + xMin
     self.__yTop = upperEdge + yMin
@@ -112,6 +119,7 @@ class Stave:
     
     
   def ScaleImage(self, scale):
+    #uses the openCV library to scale the image using a linear extrapolation
     logging.debug("Scaling image: scale = " + str(scale))
     width = int(self.__globalImg.shape[1] * scale)
     height = int(self.__globalImg.shape[0] * scale)
@@ -141,6 +149,7 @@ class Stave:
     
     logging.debug("Adding a new region of type '" + str(type) + "': [xLeft,xRight,yTop,yBottom] = " + str([xLeft,xRight,yTop,yBottom]))
     
+    #transforming the relative coordinates to global coordinates
     regionXLeft = self.__xLeft + xLeft*self.__length
     regionYTop = self.__yTop + yTop*self.__width
     regionXRight = self.__xLeft + xRight*self.__length
@@ -148,6 +157,7 @@ class Stave:
     
     newRegion = Region(self.__globalImg,regionXLeft,regionXRight,regionYTop,regionYBottom)
     
+    # self.__regions is a dictionary with the format { region_type(string) : regions(list) }
     if type in self.__regions:
       self.__regions[type].append(newRegion)
     else:
@@ -155,6 +165,15 @@ class Stave:
       self.__regions[type].append(newRegion)
 	
   def AddUBendRegion(self, rxLeft, rxRight, ryTop, ryBottom, rradius, rlength, type, bend="downwards"):
+    """
+    Adding the U-bend regions used at the end of the stave where the pipe is U-shaped
+    The region consits of two rectangles and one quater-circle.
+    It goes like: 1st rectangle -> 90deg turn (upwards or downwards) -> 2nd rectangle.
+    The region is fully defined by giving the dimensions of the first rectangle [rxLeft, rxRight, ryTop, ryBottom], which
+    implicitely defines the position of the whole thing and also the thickness of the quater circle and also the width
+    of the second rectangle. All these objects are contrained to connect smoothly. The length of the second rectangle must
+    be defined. All dimensions are relative w.r.t. the stave width or length.
+    """
     if not self.__staveFound:
       logging.error("Defining region for a stave that has not been found.")
       raise Exception("Cannot define a region for stave that has not been found.")
@@ -280,6 +299,7 @@ class Stave:
     #shift it to match Tin
     liquidTemperature = [x+(self.__Tin-liquidTemperature[0]) for x in liquidTemperature]
     
+    #in the config file the units are liters per minute
     flowRateKgPerSec = self.__FR/60
     
     logging.debug("liquidTemperature after scaling = " + str(liquidTemperature))
