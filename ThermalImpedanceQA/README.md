@@ -37,7 +37,10 @@ Some required packages won't be in the default Anaconda envirnoment and they nee
 ```bash
 conda install opencv
 ```
-
+Activate the executables:
+```bash
+chmod +x *.py
+```
 Finally make sure your python version is 3.8.5 or newer
 ```bash
 python --version
@@ -48,10 +51,20 @@ and all dependencies are correclty installed:
 ```
 If you get no errors you are good to go.
 
+At the end you may want to deactivate Anaconda:
+```bash
+conda deactivate
+```
+
 ## Usage
 After opening a shell make sure you activate the envirnoment
 ```bash
 conda actiavte
+```
+
+When you are done you can deactivate the environment
+```bash
+conda deactivate
 ```
 
 ```
