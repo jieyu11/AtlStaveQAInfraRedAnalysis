@@ -48,9 +48,9 @@ def split_by_marker(f, marker = pat, block_size = 10240):
         current = current[markerpos+ len(marker):]
 
 def main():
-  print "This is the name of the script: ", sys.argv[0]
-  print "Number of arguments: ", len(sys.argv)
-  print "The arguments are: " , str(sys.argv)
+  print("This is the name of the script: ", sys.argv[0])
+  print("Number of arguments: ", len(sys.argv))
+  print("The arguments are: " , str(sys.argv))
 
   idx=0
   inputname=sys.argv[1]
@@ -62,10 +62,10 @@ def main():
     output_file = open( outname ,"wb")
     output_file.write( line )
     output_file.close()
-    print outname
+    print(outname)
     idx=idx+1
     if idx % 100000 == 0:
-      print 'running index : {} '.format( idx )
+      print('running index : {} '.format( idx ))
       break;
 
 
