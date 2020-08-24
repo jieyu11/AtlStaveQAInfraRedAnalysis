@@ -252,7 +252,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
         else:
           print("Found poor separation of "+ str(VertSep))
           raise("Crud")
-      print VertSep
+      print(VertSep)
       VertDataFrontRemoved = np.delete(VertData,0) 
       VertDataBackRemoved = np.delete(VertData,-1)
       VertSepFR = np.amax(VertDataFrontRemoved)-np.amin(VertDataFrontRemoved)     

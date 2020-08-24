@@ -458,10 +458,6 @@ def print_usage( s_function):
   print (" -14M: searches for a 14 module stave core instead of a 13 module")
 
 def main():
-  if sys.version_info[0] >= 3:
-    print ("ERROR:<FRAMEANALYSIS::MAIN> PyROOT only works with Python 2.x. Code Tested with 2.7.10. Current version " + str(sys.version_info[0]) + ".x")
-    raise Exception(" Python Version too high. Use 2.x. ")
-
   strInputCmds = sys.argv[1:]
   if ("-h" in strInputCmds) or ("--help" in strInputCmds):
     print_usage( str(sys.argv[0]))
