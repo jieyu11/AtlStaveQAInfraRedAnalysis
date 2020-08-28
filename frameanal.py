@@ -40,10 +40,6 @@
       distribution along the cooling pipe, together with the fitted result of the mean
       position, peak width, chi2 and NDF.
 
-@notes:
-  This code assumes using python 2.7.10
-  It doesn't work for python 3.x, because ROOT support is not guaranteed.
-
 @reference:
   TTree in python: 
     https://www-zeuthen.desy.de/~middell/public/pyroot/pyroot.html
@@ -110,7 +106,7 @@ class FrameAnalysis:
     "PipeTmin":     999., 
   }
 
-  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot", bolFindConfig = True, bol14ModCore = False) :
+  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot", bolFindConfig = True, bol14ModCore = False):
     #
     # better run root on batch mode
     #
