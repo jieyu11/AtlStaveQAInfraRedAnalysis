@@ -308,10 +308,7 @@ def main():
   """
   The main routine
   """
-  if sys.version_info[0] >= 3:
-    print ("ERROR: PyROOT only works with Python 2.x")
-    raise Exception(" Python Version too high. Use 2.x.")
-
+  
   #Load the Files
   nargv = len(sys.argv)
   inputfile = []

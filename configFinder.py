@@ -194,7 +194,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
             for Point in VertData:
               avgLineTemp=0.0
               for i in range(int(Point),int(Point+StaveLength)):
-                avgLineTemp += abs(image[i][yPixels/2] - 20.)
+                avgLineTemp += abs(image[i][int(yPixels/2)] - 20.)
               if avgLineTemp > bestLineTemp:
                 bestPoint = Point
                 bestLineTemp = avgLineTemp
@@ -218,7 +218,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
             for Point in VertData:
               avgLineTemp=0.0
               for i in range(int(Point-StaveLength),int(Point)):
-                avgLineTemp += abs(image[i][yPixels/2] - 20.)
+                avgLineTemp += abs(image[i][int(yPixels/2)] - 20.)
               if avgLineTemp > bestLineTemp:
                 bestPoint = Point
                 bestLineTemp = avgLineTemp

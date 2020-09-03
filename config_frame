@@ -2,19 +2,19 @@
 # frame parameters used in frameanal.py
 #
 StavePixelX0 79.0
-StavePixelY0 164.5
+StavePixelY0 211.0
 StavePixelX1 622.0
-StavePixelY1 231.0
+StavePixelY1 281.0
 PipePixelX0 106.0
-PipePixelY0 173.5
+PipePixelY0 221.0
 PipePixelX1 610.0
-PipePixelY1 203.0
+PipePixelY1 251.0
 CMperPixel 0.23272727
 StaveSideL 0
-LiquidTLow 2
-FrameTmax 25
-FrameTmin 15
-StaveTmax 25
-StaveTmin 15
-PipeTmax 15
+LiquidTLow 0
+FrameTmax 50
+FrameTmin 10
+StaveTmax 50
+StaveTmin 25
+PipeTmax 50
 PipeTmin 25

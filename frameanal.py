@@ -242,8 +242,10 @@ class FrameAnalysis:
 
     _Xcm_frame = self._parameters[ "CMperPixel" ] * self._nxpixel_raw
     _Ycm_frame = self._parameters[ "CMperPixel" ] * self._nypixel_raw
-    _h2_frame = ROOT.TH2F( "frame", ";X in cm; Y in cm; Temperature (#circC)", self._nxpixel_raw, 0., _Xcm_frame, self._nypixel_raw, 0., _Ycm_frame )
-
+    
+    
+    _h2_frame = ROOT.TH2F( "frame", ";X in cm; Y in cm; Temperature (#circC)", int(self._nxpixel_raw), 0., _Xcm_frame, int(self._nypixel_raw), 0., _Ycm_frame )
+    
     _Xcm_stave = self._parameters[ "CMperPixel" ] * self._nxpixel_stave
     _Ycm_stave = self._parameters[ "CMperPixel" ] * self._nypixel_stave
     _h2_stave = ROOT.TH2F( "stave", ";X in cm; Y in cm; Temperature (#circC)", self._nxpixel_stave, 0., _Xcm_stave, self._nypixel_stave, 0., _Ycm_stave )

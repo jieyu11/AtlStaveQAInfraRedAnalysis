@@ -600,12 +600,14 @@ def PrintDefectInfo(DefectInfo,intLine=-1,bolTempHot=True):
   nThings = 7
   if bolPrintAll == True:
     for i in range(len(DefectInfo)/nThings):
-      SigDefect(DefectInfo[i*nThings+4],bolTempHot)
-      print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[i*nThings],int(DefectInfo[i*nThings+1]),DefectInfo[i*nThings+2],DefectInfo[i*nThings+3],DefectInfo[i*nThings+4],DefectInfo[i*nThings+5],int(DefectInfo[i*nThings+6]))
+      print("array index: {}".format(int(i*nThings+4)))
+      print(DefectInfo)
+      SigDefect(DefectInfo[int(i*nThings+4)],bolTempHot)
+      print(" {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[i*nThings],int(DefectInfo[i*nThings+1]),DefectInfo[i*nThings+2],DefectInfo[i*nThings+3],DefectInfo[i*nThings+4],DefectInfo[i*nThings+5],int(DefectInfo[i*nThings+6])))
       SigDefect(DefectInfo[i*nThings+4],bolTempHot)
   else: 
     SigDefect(DefectInfo[intLine*nThings+4],bolTempHot)
-    print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[intLine*nThings],int(DefectInfo[intLine*nThings+1]),DefectInfo[intLine*nThings+2],DefectInfo[intLine*nThings+3],DefectInfo[intLine*nThings+4],DefectInfo[intLine*nThings+5],int(DefectInfo[intLine*nThings+6]))
+    print(" {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[intLine*nThings],int(DefectInfo[intLine*nThings+1]),DefectInfo[intLine*nThings+2],DefectInfo[intLine*nThings+3],DefectInfo[intLine*nThings+4],DefectInfo[intLine*nThings+5],int(DefectInfo[intLine*nThings+6])))
   if len(DefectInfo) == 0:
     print(" NO FLAWS WERE FOUND ")
 
