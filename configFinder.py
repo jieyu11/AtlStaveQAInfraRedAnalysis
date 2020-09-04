@@ -51,15 +51,8 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
         Tree.GetEntry(j*xPixels + i) #Reading from a single frame
         image[i][j] = _temperature[0] 
 
-  #QMUL: splitting the image
-  
-  height = image.shape[1]
-  lower_img = image[:, 0:int(height/2)]
-  upper_img = image[:, int(height/2):height]
-  image = lower_img
-  yPixels = int(height/2)
-  #end of QMUL
-  
+
+
   # Make The Canny Image
   v = np.median(image)
 
@@ -124,18 +117,15 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
       c2.lines += [lineObj]
       lineObj.Draw()
 
-    HorData = np.sort(HorData)
-    #CentreOfStaveY = 240
-    #QMUL: the staves are not in the middle, but at the bottom (or top)
-    CentreOfStaveY = 180
-    CentSep = np.amax(abs(HorData-CentreOfStaveY)) 
+    HorData = np.sort(HorData) 
+    CentSep = np.amax(abs(HorData-240))
     while CentSep > 50:
       lenHor = np.size(HorData)
-      if abs(HorData[0]-CentreOfStaveY)> 50:
+      if abs(HorData[0]-240)> 50:
         HorData = np.delete(HorData,0)
       else:
         HorData = np.delete(HorData,lenHor-1)
-      CentSep = np.amax(abs(HorData-CentreOfStaveY))
+      CentSep = np.amax(abs(HorData-240))
 
     lineData += [np.amax(HorData)]
     lineData += [np.amin(HorData)]
@@ -152,10 +142,8 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
     StaveLength = 548.2 #13 module stave core length in pixels
     cutPercent= 0.05
   else:
-    #StaveLength = 580 #~14 module stave core length (This is approximated from a Yale thermal image from Rec-000110)
-    StaveLength = 630 #~14 module stave for the QMUL IR set-up
-    #cutPercent= 0.02
-    cutPercent = 0.20 # QMUL
+    StaveLength = 580 #~14 module stave core length (This is approximated from a Yale thermal image from Rec-000110)
+    cutPercent= 0.02
   try:
     findShortLines = cv2.HoughLinesP(image2,rho = 1,theta = 1*np.pi/10000,threshold = 20,minLineLength = 10, maxLineGap = 5)
 
@@ -206,7 +194,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
             for Point in VertData:
               avgLineTemp=0.0
               for i in range(int(Point),int(Point+StaveLength)):
-                avgLineTemp += abs(image[i][yPixels/2] - 20.)
+                avgLineTemp += abs(image[i][int(yPixels/2)] - 20.)
               if avgLineTemp > bestLineTemp:
                 bestPoint = Point
                 bestLineTemp = avgLineTemp
@@ -230,7 +218,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
             for Point in VertData:
               avgLineTemp=0.0
               for i in range(int(Point-StaveLength),int(Point)):
-                avgLineTemp += abs(image[i][yPixels/2] - 20.)
+                avgLineTemp += abs(image[i][int(yPixels/2)] - 20.)
               if avgLineTemp > bestLineTemp:
                 bestPoint = Point
                 bestLineTemp = avgLineTemp
@@ -252,7 +240,7 @@ def FindPoints(strImageFile,strOutputFile,outdir,bol14ModCore = False,xPixels = 
         else:
           print("Found poor separation of "+ str(VertSep))
           raise("Crud")
-      print VertSep
+      print(VertSep)
       VertDataFrontRemoved = np.delete(VertData,0) 
       VertDataBackRemoved = np.delete(VertData,-1)
       VertSepFR = np.amax(VertDataFrontRemoved)-np.amin(VertDataFrontRemoved)     

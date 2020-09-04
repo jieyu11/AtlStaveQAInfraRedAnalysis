@@ -273,7 +273,7 @@ def FindPeaks(Hist,outdir,fitdir,canvas,bolVerb = 0):
     intPipeNum = -1
 
   DefectInfo = []
-  for i in range(nMflaws):
+  for i in range(int(nMflaws)):
     DefectInfo = np.append(DefectInfo,i)                                  #Flaw Number
     DefectInfo = np.append(DefectInfo,intPipeNum)                         #Flaw Pipe
     DefectInfo = np.append(DefectInfo,float(MFlaws[i*5+1]))               #Flaw Center
@@ -295,7 +295,7 @@ def GetDefectBoxes(DefectInfo,Ymin,Ymax,bolTempHot = True):
   if bolTempHot == False:
     TScale = 2.
  #Major Flaw Boxes
-  for i in range(len(DefectInfo)/7):
+  for i in range(int(len(DefectInfo)/7)):
     Center = DefectInfo[i*7+2]
     Xmin = Center - 0.5*DefectInfo[i*7+3]
     Xmax = Center + 0.5*DefectInfo[i*7+3] 
@@ -599,13 +599,15 @@ def PrintDefectInfo(DefectInfo,intLine=-1,bolTempHot=True):
   print(" Name    Center     Width     Height    Goodness    Fit")
   nThings = 7
   if bolPrintAll == True:
-    for i in range(len(DefectInfo)/nThings):
-      SigDefect(DefectInfo[i*nThings+4],bolTempHot)
-      print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[i*nThings],int(DefectInfo[i*nThings+1]),DefectInfo[i*nThings+2],DefectInfo[i*nThings+3],DefectInfo[i*nThings+4],DefectInfo[i*nThings+5],int(DefectInfo[i*nThings+6]))
+    for i in range(int(len(DefectInfo)/nThings)):
+      print("array index: {}".format(int(i*nThings+4)))
+      print(DefectInfo)
+      SigDefect(DefectInfo[int(i*nThings+4)],bolTempHot)
+      print(" {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[i*nThings],int(DefectInfo[i*nThings+1]),DefectInfo[i*nThings+2],DefectInfo[i*nThings+3],DefectInfo[i*nThings+4],DefectInfo[i*nThings+5],int(DefectInfo[i*nThings+6])))
       SigDefect(DefectInfo[i*nThings+4],bolTempHot)
   else: 
     SigDefect(DefectInfo[intLine*nThings+4],bolTempHot)
-    print " {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[intLine*nThings],int(DefectInfo[intLine*nThings+1]),DefectInfo[intLine*nThings+2],DefectInfo[intLine*nThings+3],DefectInfo[intLine*nThings+4],DefectInfo[intLine*nThings+5],int(DefectInfo[intLine*nThings+6]))
+    print(" {0:2.1f}-{1:1}  {2:8.3f}  {3:8.3f}  {4:8.3f}  {5:8.5f}    {6:1}".format(DefectInfo[intLine*nThings],int(DefectInfo[intLine*nThings+1]),DefectInfo[intLine*nThings+2],DefectInfo[intLine*nThings+3],DefectInfo[intLine*nThings+4],DefectInfo[intLine*nThings+5],int(DefectInfo[intLine*nThings+6])))
   if len(DefectInfo) == 0:
     print(" NO FLAWS WERE FOUND ")
 

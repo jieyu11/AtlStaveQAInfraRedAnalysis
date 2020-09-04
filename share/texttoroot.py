@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python 
 
 """
 @run
@@ -383,9 +383,6 @@ def print_usage( s_function):
   print ("Usage: " + s_function + " OUT_DIR NUM_INPUT_FILES [CONFIG=config] [IN_DIR=tout] [IN_NAME=frame] [IN_EXT=pgm]")
 
 def main():
-  if sys.version_info[0] >= 3:
-    print ("ERROR:<TEXTTOROOT::MAIN> PyROOT only works with Python 2.x. Code Tested with 2.7.10. Current version " + str(sys.version_info[0]) + ".x")
-    raise " Python Version too high. Use 2.x. "
 
   nargv = len(sys.argv)
   if (nargv <= 2): 

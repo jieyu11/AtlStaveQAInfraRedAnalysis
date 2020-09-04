@@ -40,10 +40,6 @@
       distribution along the cooling pipe, together with the fitted result of the mean
       position, peak width, chi2 and NDF.
 
-@notes:
-  This code assumes using python 2.7.10
-  It doesn't work for python 3.x, because ROOT support is not guaranteed.
-
 @reference:
   TTree in python: 
     https://www-zeuthen.desy.de/~middell/public/pyroot/pyroot.html
@@ -110,7 +106,7 @@ class FrameAnalysis:
     "PipeTmin":     999., 
   }
 
-  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot", bolFindConfig = True, bol14ModCore = False) :
+  def __init__ (self, roo_name, cfg_name = "config_frame", fig_outdir = "plot", bolFindConfig = True, bol14ModCore = False):
     #
     # better run root on batch mode
     #
@@ -147,7 +143,7 @@ class FrameAnalysis:
       #
       # skip empty line or started with '#'
       #
-      if ( len(line) <= 0 ) or line.startswith( '#' ) :
+      if ( len(line) <= 0 ) or line.startswith( '#' ):
         continue
 
       item_val = line.split()
@@ -246,8 +242,10 @@ class FrameAnalysis:
 
     _Xcm_frame = self._parameters[ "CMperPixel" ] * self._nxpixel_raw
     _Ycm_frame = self._parameters[ "CMperPixel" ] * self._nypixel_raw
-    _h2_frame = ROOT.TH2F( "frame", ";X in cm; Y in cm; Temperature (#circC)", self._nxpixel_raw, 0., _Xcm_frame, self._nypixel_raw, 0., _Ycm_frame )
-
+    
+    
+    _h2_frame = ROOT.TH2F( "frame", ";X in cm; Y in cm; Temperature (#circC)", int(self._nxpixel_raw), 0., _Xcm_frame, int(self._nypixel_raw), 0., _Ycm_frame )
+    
     _Xcm_stave = self._parameters[ "CMperPixel" ] * self._nxpixel_stave
     _Ycm_stave = self._parameters[ "CMperPixel" ] * self._nypixel_stave
     _h2_stave = ROOT.TH2F( "stave", ";X in cm; Y in cm; Temperature (#circC)", self._nxpixel_stave, 0., _Xcm_stave, self._nypixel_stave, 0., _Ycm_stave )
@@ -458,10 +456,6 @@ def print_usage( s_function):
   print (" -14M: searches for a 14 module stave core instead of a 13 module")
 
 def main():
-  if sys.version_info[0] >= 3:
-    print ("ERROR:<FRAMEANALYSIS::MAIN> PyROOT only works with Python 2.x. Code Tested with 2.7.10. Current version " + str(sys.version_info[0]) + ".x")
-    raise Exception(" Python Version too high. Use 2.x. ")
-
   strInputCmds = sys.argv[1:]
   if ("-h" in strInputCmds) or ("--help" in strInputCmds):
     print_usage( str(sys.argv[0]))
