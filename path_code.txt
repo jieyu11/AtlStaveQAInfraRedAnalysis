@@ -1,2 +1,0 @@
-/opt/root_v5.34.38/bin:/users/vozdecky/anaconda2/bin:/users/vozdecky/anaconda2/condabin:/usr/local/bin:/usr/bin:/bin:/usr/local/games:/usr/games:/users/vozdecky/Image-ExifTool-11.76
-
