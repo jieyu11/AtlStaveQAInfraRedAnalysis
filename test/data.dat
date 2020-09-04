@@ -1,7 +1,0 @@
-#name	value 	comment
-Tin	80.0	temperature of the liquid flowing in
-Tout	40.0	temperature of the liquid at the end
-Cliq	4200	heat capacity of the liquid (water)
-
-
-
