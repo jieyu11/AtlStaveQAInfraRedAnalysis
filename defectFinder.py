@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 """
 @run:
@@ -78,7 +78,7 @@ def TextCommands(inputfile,outdirs,fitdirs,canvas,bolVerb):
   ComInfo() 
   bolQuit = False
   while bolQuit == False:
-    Vin = str(raw_input("\nType the command you wish to do:\n"))
+    Vin = str(input("\nType the command you wish to do:\n"))
     #canvas.Clear()
     #canvas.Update()
     if Vin == 'q':

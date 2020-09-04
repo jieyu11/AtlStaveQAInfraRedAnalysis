@@ -143,7 +143,7 @@ class FrameAnalysis:
       #
       # skip empty line or started with '#'
       #
-      if ( len(line) <= 0 ) or line.startswith( '#' ) :
+      if ( len(line) <= 0 ) or line.startswith( '#' ):
         continue
 
       item_val = line.split()
