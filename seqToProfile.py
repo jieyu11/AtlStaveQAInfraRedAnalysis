@@ -32,7 +32,7 @@ def main():
     for i in range(1,nargv):
       inputfiles = np.append(inputfiles,sys.argv[i])
   while True:
-    Vin = raw_input("\nIs the stave core a 13 or 14 module core? (13/14)")
+    Vin = input("\nIs the stave core a 13 or 14 module core? (13/14)")
     if "13" in Vin:
       bol14Mod = False
       break
