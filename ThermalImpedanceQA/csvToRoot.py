@@ -32,15 +32,23 @@ with open(inputFile) as csvfile:
     imgList.append(row)
 image = np.array(imgList)
 
-file = ROOT.TFile( "test", "recreate")
+file = ROOT.TFile( "test.root", "recreate")
 
-temperature = [0,1,2,4]
-xpos = [0,1,0,1]
-ypos = [0,0,1,1]
+temperature = np.empty((1), dtype="float64")
+xpos = np.empty((1), dtype="int64")
+ypos = np.empty((1), dtype="int64")
 
-atree = ROOT.TTree("atree", "a tree of temperature data");
+
+atree = ROOT.TTree("atree", "a tree of temperature data")
 atree.Branch('temperature', temperature, 'temperature/D')
 atree.Branch('xpos', xpos, 'xpos/I')
 atree.Branch('ypos', ypos, 'ypos/I')
-atree.Fill()
+
+for i in range(0,image.shape[0]):
+    for j in range(0,image.shape[1]):
+        temperature[0] = image[i][j]
+        xpos[0] = i
+        ypos[0] = j
+        atree.Fill()
+
 file.Write()
