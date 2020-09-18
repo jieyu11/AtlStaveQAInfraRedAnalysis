@@ -1,0 +1,7 @@
+rptFileStartLine	19
+ambientTemperature	20
+paddingX	10
+paddingY	10
+latticeXperiod	5
+latticeYperiod	2
+
