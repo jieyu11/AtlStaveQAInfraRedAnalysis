@@ -140,8 +140,9 @@ class Stave:
       raise Exception("Cannot define a region for stave that has not been found.")
     
     if len(list(filter(lambda x : x > 1.0 or x < 0.0, [xLeft,xRight,yTop,yBottom]))) > 0:
-      logging.error("Invalid coordinates for a region. [xLeft,xRight,yTop,yBottom] = " + str([xLeft,xRight,yTop,yBottom]))
-      raise Exception("Regions are defined by relative coordinates w.r.t. the stave. The coordinates must be between 0.0 and 1.0.")
+      logging.debug("A region of type '{}' is defined outside of stave.".format(type))
+      #logging.error("Invalid coordinates for a region. [xLeft,xRight,yTop,yBottom] = " + str([xLeft,xRight,yTop,yBottom]))
+      #raise Exception("Regions are defined by relative coordinates w.r.t. the stave. The coordinates must be between 0.0 and 1.0.")
     
     if not(xLeft < xRight and yTop < yBottom):
       logging.error("Invalid coordinates for a region. [xLeft,xRight,yTop,yBottom] = " + str([xLeft,xRight,yTop,yBottom]))
