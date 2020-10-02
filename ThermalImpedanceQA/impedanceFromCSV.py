@@ -14,6 +14,7 @@ import os
 import csv
 import logging
 import argparse
+import configparser
 from matplotlib import pyplot as plt
 from stave import Stave
 
@@ -161,13 +162,44 @@ if not(args.one_face):
   staveBottomTemp = staveBottom.getTemperatures("small")
 
 #correcting the temperature for the regions around the EoS ear (see Documents/2020-09-09-EOS-Impedances.pdf)
-staveTop.setTemperatureCorrection("small",0,-99.99)
-staveTop.setTemperatureCorrection("small",1,99.9)
-staveTop.setTemperatureCorrection("large",0,-99.99)
-staveTop.setTemperatureCorrection("large",1,99.9)
+logging.debug("Importing variables from config file " + configFile + " in the impedanceFromCSV.py script.")
+config = configparser.ConfigParser()
+config.read(configFile)
+temperatureProfile = [float(x) for x in config["Default"]["temperatureProfile"].split(",")]
+#total heat given up by the liquid per second
+totalHeat = (float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))*float(config["Default"]["c_liquid"])*(float(config["Default"]["flow_rate"])/60.0)
+earTemp = staveTop.getTemperatures("small")[0]
+earHeat = (temperatureProfile[2]-temperatureProfile[0] - 2*(temperatureProfile[3]-temperatureProfile[2]))*totalHeat/2
+heatNextEar = (1.0 + 54.0/98)*totalHeat/2
+#liquid temperature between segments 0 and 1
+liqTempAfterSeg0 = float(config["Default"]["temp_in"]) - temperatureProfile[1]*(float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))
+
+logging.debug("totalHeat = {}".format(totalHeat))
+logging.debug("earTemp = {}".format(earTemp))
+logging.debug("earHeat = {}".format(earHeat))
+logging.debug("heatNextEar = {}".format(heatNextEar))
+logging.debug("liqTempAfterSeg0 = {}".format(liqTempAfterSeg0))
+
+#dT/dQ_region_segment as described in Documents/2020-09-09-EOS-Impedances.pdf
+dTdQ_large_0 = 1.193
+dTdQ_large_1 = 0.716
+dTdQ_small_0 = 0.591
+dTdQ_small_1 = 0.251
+dTdQ_nextEar = 1.152
+
+#correcting the surface temperatures of the segments around the EoS region
+staveTop.setTemperatureCorrection("large",0, earHeat*dTdQ_large_0)
+staveTop.setTemperatureCorrection("large",1, earHeat*dTdQ_large_1)
+staveTop.setTemperatureCorrection("small",0, earHeat*dTdQ_small_0)
+staveTop.setTemperatureCorrection("small",1, earHeat*dTdQ_small_1)
 
 logging.debug("Temperature corrections for staveTop small regions: {}".format(str(staveTop.getTemperatureCorrections("small"))))
 logging.debug("Temperature corrections for staveTop large regions: {}".format(str(staveTop.getTemperatureCorrections("large"))))
+
+#computing the impedance for the ear
+earImpedance = (liqTempAfterSeg0 - earTemp - heatNextEar*dTdQ_nextEar)/earHeat
+print("Z_ear = {}".format(earImpedance))
+#WIP: print the impedance on the plot as well
 
 #extracting the impedances
 largeTop = staveTop.getImpedances("large")
