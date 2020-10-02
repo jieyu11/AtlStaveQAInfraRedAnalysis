@@ -83,7 +83,6 @@ if args.one_face:
 else:
   staveTop.FindStaveWithin(0,1.0,0,0.5)
   staveBottom.FindStaveWithin(0,1.0,0.5,1.0)
-  
 #print the positions of the staves
 print("Staves' edges found at:")
 staveTop.Echo()
@@ -125,7 +124,6 @@ for i in range(numModules):
     staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
     if not(args.one_face):
       staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
-    
 #small regions above the pipe (return pipe)
 for i in reversed(range(numModules)):
   #exception for near-edge regions
@@ -162,6 +160,14 @@ if not(args.one_face):
 
   staveBottomTemp = staveBottom.getTemperatures("small")
 
+#correcting the temperature for the regions around the EoS ear (see Documents/2020-09-09-EOS-Impedances.pdf)
+staveTop.setTemperatureCorrection("small",0,-99.99)
+staveTop.setTemperatureCorrection("small",1,99.9)
+staveTop.setTemperatureCorrection("large",0,-99.99)
+staveTop.setTemperatureCorrection("large",1,99.9)
+
+logging.debug("Temperature corrections for staveTop small regions: {}".format(str(staveTop.getTemperatureCorrections("small"))))
+logging.debug("Temperature corrections for staveTop large regions: {}".format(str(staveTop.getTemperatureCorrections("large"))))
 
 #extracting the impedances
 largeTop = staveTop.getImpedances("large")
@@ -228,7 +234,7 @@ if args.graphs:
   plt.text(0, -0.13*yrange, "Code version: " + gitHash + " " + gitDate[:-6], fontsize=10)
   plt.savefig(outputFilename + ".png")
   print("Outputing graphical output into a file: " + outputFilename + ".png")
-  
+
 
 if args.debug:
   plt.clf()
