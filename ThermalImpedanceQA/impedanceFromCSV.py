@@ -288,7 +288,7 @@ if args.graphs:
     ZearStr = ZearStr + "       Z_earBottom = {}".format(earImpedanceBottom)
   plt.text(0, 0.9*yrange, ZearStr, fontsize=10, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
   #code version printed on the plot
-  plt.text(0, -0.13*yrange, "Code version: " + gitHash + " " + gitDate[:-6], fontsize=10)
+  plt.text(0, -0.13*yrange, "Code version: {} {}".format(gitHash, gitDate[:-6]), fontsize=10)
   plt.savefig(outputFilename + ".png")
   print("Outputing graphical output into a file: " + outputFilename + ".png")
 
