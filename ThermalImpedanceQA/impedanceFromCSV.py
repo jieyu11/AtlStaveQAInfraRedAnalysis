@@ -254,8 +254,11 @@ with open(outputFilename+".csv", "w+") as f:
         f.write(str(i)+", "+str(largeTop[i])+", "+str(smallTop[i])+"\n")
       else:
         f.write(str(i)+", "+str(largeTop[i])+", "+str(largeBottom[i])+", "+str(smallTop[i])+", "+str(smallBottom[i]) + "\n")
-f.close()
-
+  f.write("\n")
+  f.write("Z_earTop, {} \n".format(earImpedanceTop))
+  if not args.one_face:
+    f.write("Z_earBottom, {}".format(earImpedanceBottom))
+  f.close()
 
 #plotting if -g option selected
 if args.graphs:
