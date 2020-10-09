@@ -18,7 +18,6 @@ import configparser
 from matplotlib import pyplot as plt
 from stave import Stave
 
-
 parser = argparse.ArgumentParser()
 parser.add_argument("path", help="The path to the input CSV file")
 parser.add_argument("config", help="The path to the configuration file")
@@ -280,6 +279,12 @@ if args.graphs:
   plt.axis([-0.5,27.5,0,yrange])
   plt.grid()
   plt.legend()
+  #ear impedances printed on the plot
+  ZearStr = "Z_earTop = {}".format(earImpedanceTop)
+  if not args.one_face:
+    ZearStr = ZearStr + "       Z_earBottom = {}".format(earImpedanceBottom)
+  plt.text(0, 0.9*yrange, ZearStr, fontsize=10, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+  #code version printed on the plot
   plt.text(0, -0.13*yrange, "Code version: " + gitHash + " " + gitDate[:-6], fontsize=10)
   plt.savefig(outputFilename + ".png")
   print("Outputing graphical output into a file: " + outputFilename + ".png")
