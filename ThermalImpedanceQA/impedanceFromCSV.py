@@ -172,7 +172,7 @@ earTempTop = staveTop.getTemperatures("small")[0]
 if not args.one_face:
   earTempBottom = staveBottom.getTemperatures("small")[0]
 earHeat = (temperatureProfile[2]-temperatureProfile[0] - 2*(temperatureProfile[3]-temperatureProfile[2]))*totalHeat/2
-heatNextEar = (1.0 + 54.0/98)*totalHeat/2
+heatNextEar = (1.0 + 54.0/98)*(temperatureProfile[3]-temperatureProfile[2])*totalHeat/2
 #liquid temperature between segments 0 and 1
 liqTempAfterSeg0 = float(config["Default"]["temp_in"]) - temperatureProfile[1]*(float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))
 
