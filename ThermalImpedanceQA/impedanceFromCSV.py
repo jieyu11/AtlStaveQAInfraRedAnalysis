@@ -266,6 +266,10 @@ if args.graphs:
   plt.plot(largeTop, label="Large Region: top")
   plt.plot(smallTop, label="Small Region: top")
   plt.plot(impedanceCombinedTop, label="Small Region: top combined")
+  plt.plot([-1],[earImpedanceTop],marker='o', linestyle='', label="Z_earTop")
+  if not args.one_face:
+    plt.plot([-1],[earImpedanceBottom],marker='o', linestyle='', label="Z_earBottom")
+  plt.plot()
   if not(args.one_face):
     plt.plot(largeBottom, label="Large Region: bottom")
     plt.plot(smallBottom, label="Small Region: bottom")
@@ -279,14 +283,16 @@ if args.graphs:
     yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom)]))
   plt.xticks(np.arange(0, 28, 1.0))
   plt.yticks(np.arange(0, yrange, 0.5))
-  plt.axis([-0.5,27.5,0,yrange])
+  plt.axis([-2.0,27.5,0,yrange])
   plt.grid()
   plt.legend()
   #ear impedances printed on the plot
+  """
   ZearStr = "Z_earTop = {}".format(earImpedanceTop)
   if not args.one_face:
     ZearStr = ZearStr + "       Z_earBottom = {}".format(earImpedanceBottom)
   plt.text(0, 0.9*yrange, ZearStr, fontsize=10, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+  """
   #code version printed on the plot
   plt.text(0, -0.13*yrange, "Code version: {} {}".format(gitHash, gitDate[:-6]), fontsize=10)
   plt.savefig(outputFilename + ".png")
