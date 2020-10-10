@@ -143,7 +143,8 @@ for i in reversed(range(numModules)):
 #end-of-stave ear region
 #the region is defined to stay safely away from the edges: in x direction 0.1 of module length is subtracted from both sides; for y direction it's 5% of the stave width
 staveTop.AddRegion(0.1/numModules,154.0/1375-0.1/numModules,-49.0/115+0.05,0.0,"ear")
-staveBottom.AddRegion(0.1/numModules,154.0/1375-0.1/numModules,1.0,1.0+49.0/115-0.05,"ear")
+if not args.one_face:
+  staveBottom.AddRegion(0.1/numModules,154.0/1375-0.1/numModules,1.0,1.0+49.0/115-0.05,"ear")
 
 #drawing the regions
 staveTop.DrawRegions(img_edges,"large")
