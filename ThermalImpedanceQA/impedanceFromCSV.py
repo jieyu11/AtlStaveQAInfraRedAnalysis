@@ -277,7 +277,7 @@ if args.graphs:
     plt.plot(impedanceCombinedBottom, label="Small Region: bottom combined")
   plt.xlabel("Region number")
   plt.ylabel("Thermal Impedance [K/W]")
-  plt.title("Thermal Impedances for the Stave control regions")
+  plt.title(outputFilename.split("/")[-1])
   if args.one_face:
     yrange = int(1+1.1*np.max([np.max(largeTop),np.max(smallTop)]))
   else:
