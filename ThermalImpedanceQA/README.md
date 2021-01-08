@@ -20,7 +20,8 @@ And set the auto-activation to false to prevent Anaconda initializing automatica
 ```bash
 conda config --set auto_activate_base false
 ```
-The evironment can be activated through:
+Restart the shell.
+The evironment can be now activated through:
 ```bash
 conda actiavte
 ```
