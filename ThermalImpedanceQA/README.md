@@ -7,6 +7,8 @@ This code takes an IR image (in the CSV format) of a stave and outputs the therm
 * Anaconda 3 (for pytest, numpy, configparsers etc.)
 * OpenCV
 
+The code has been tested with Python 3.7.9, OpenCV version 3.4.2 (on Linux) and version 4.5.0 (on Windows).
+
 ## Installation
 
 Download and install [Anaconda](https://www.anaconda.com/products/individual) to manage the dependencies. Make sure Anaconda is added to the system PATH variable.
@@ -42,7 +44,7 @@ Activate the executables:
 ```bash
 chmod +x *.py
 ```
-Finally make sure your python version is 3.8.5 or newer
+Finally make sure your python version is 3.7.x or newer
 ```bash
 python --version
 ```
