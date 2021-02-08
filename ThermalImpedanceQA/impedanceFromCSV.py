@@ -296,9 +296,9 @@ if args.graphs:
   plt.ylabel("Thermal Impedance [K/W]")
   plt.title(outputFilename.split("/")[-1])
   if args.one_face:
-    yrange = int(1+1.1*np.max([np.max(largeTop),np.max(smallTop)]))
+    yrange = int(1+1.1*np.max([np.max(largeTop),np.max(smallTop),earImpedanceTop]))
   else:
-    yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom)]))
+    yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom),earImpedanceTop,earImpedanceBottom]))
   plt.xticks(np.arange(0, 28, 1.0))
   plt.yticks(np.arange(0, yrange, 0.5))
   plt.axis([-2.0,27.5,0,yrange])
