@@ -194,11 +194,19 @@ logging.debug("heatNextEar = {}".format(heatNextEar))
 logging.debug("liqTempAfterSeg0 = {}".format(liqTempAfterSeg0))
 
 #dT/dQ_region_segment as described in Documents/2020-09-09-EOS-Impedances.pdf
-dTdQ_large_0 = 1.193
-dTdQ_large_1 = 0.716
-dTdQ_small_0 = 0.591
-dTdQ_small_1 = 0.251
-dTdQ_nextEar = 1.152
+#importing the values from the config file
+logging.debug("Loading the correction factors from the config file:")
+dTdQ_large_0 = float(config["Default"]["dTdQ_large_0"]) #1.193
+dTdQ_large_1 = float(config["Default"]["dTdQ_large_1"]) #0.716
+dTdQ_small_0 = float(config["Default"]["dTdQ_small_0"]) #0.591
+dTdQ_small_1 = float(config["Default"]["dTdQ_small_1"]) #0.251
+dTdQ_nextEar = float(config["Default"]["dTdQ_nextEar"]) #1.152
+
+logging.debug("dTdQ_large_0 = {}".format(dTdQ_large_0))
+logging.debug("dTdQ_large_1 = {}".format(dTdQ_large_1))
+logging.debug("dTdQ_small_0 = {}".format(dTdQ_small_0))
+logging.debug("dTdQ_small_1 = {}".format(dTdQ_small_1))
+logging.debug("dTdQ_nextEar = {}".format(dTdQ_nextEar))
 
 #correcting the surface temperatures of the segments around the EoS region
 staveTop.setTemperatureCorrection("large",0, earHeat*dTdQ_large_0)
