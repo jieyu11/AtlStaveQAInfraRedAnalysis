@@ -168,11 +168,20 @@ config.read(configFile)
 temperatureProfile = [float(x) for x in config["Default"]["temperatureProfile"].split(",")]
 #total heat given up by the liquid per second
 totalHeat = (float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))*float(config["Default"]["c_liquid"])*(float(config["Default"]["flow_rate"])/60.0)
-earTempTop = staveTop.getTemperatures("small")[0]
+earTempTop = staveTop.getTemperatures("ear")[0]
 if not args.one_face:
-  earTempBottom = staveBottom.getTemperatures("small")[0]
-earHeat = (temperatureProfile[2]-temperatureProfile[0] - 2*(temperatureProfile[3]-temperatureProfile[2]))*totalHeat/2
-heatNextEar = (1.0 + 54.0/98)*(temperatureProfile[3]-temperatureProfile[2])*totalHeat/2
+  earTempBottom = staveBottom.getTemperatures("ear")[0]
+
+fractionHeat_segment0 = (temperatureProfile[1]-temperatureProfile[0])/(temperatureProfile[-1] - temperatureProfile[0])
+fractionHeat_segment1 = (temperatureProfile[2]-temperatureProfile[1])/(temperatureProfile[-1] - temperatureProfile[0])
+fractionHeat_segment2 = (temperatureProfile[3]-temperatureProfile[2])/(temperatureProfile[-1] - temperatureProfile[0])
+
+logging.debug("fractionHeat_segment0 = {}".format(fractionHeat_segment0))
+logging.debug("fractionHeat_segment1 = {}".format(fractionHeat_segment1))
+logging.debug("fractionHeat_segment2 = {}".format(fractionHeat_segment2))
+
+earHeat = (fractionHeat_segment0+fractionHeat_segment1 - 2*fractionHeat_segment2)*totalHeat/2
+heatNextEar = (1.0 + 54.0/98)*fractionHeat_segment2*totalHeat/2
 #liquid temperature between segments 0 and 1
 liqTempAfterSeg0 = float(config["Default"]["temp_in"]) - temperatureProfile[1]*(float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))
 
