@@ -14,9 +14,9 @@ import os
 import csv
 import logging
 import argparse
+import configparser
 from matplotlib import pyplot as plt
 from stave import Stave
-
 
 parser = argparse.ArgumentParser()
 parser.add_argument("path", help="The path to the input CSV file")
@@ -83,7 +83,6 @@ if args.one_face:
 else:
   staveTop.FindStaveWithin(0,1.0,0,0.5)
   staveBottom.FindStaveWithin(0,1.0,0.5,1.0)
-  
 #print the positions of the staves
 print("Staves' edges found at:")
 staveTop.Echo()
@@ -125,7 +124,6 @@ for i in range(numModules):
     staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
     if not(args.one_face):
       staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
-    
 #small regions above the pipe (return pipe)
 for i in reversed(range(numModules)):
   #exception for near-edge regions
@@ -142,9 +140,16 @@ for i in reversed(range(numModules)):
     if not(args.one_face):
       staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
 
+#end-of-stave ear region
+#the region is defined to stay safely away from the edges: in x direction 0.1 of module length is subtracted from both sides; for y direction it's 5% of the stave width
+staveTop.AddRegion(0.1/numModules,154.0/1375-0.1/numModules,-49.0/115+0.05,0.0,"ear")
+if not args.one_face:
+  staveBottom.AddRegion(0.1/numModules,154.0/1375-0.1/numModules,1.0,1.0+49.0/115-0.05,"ear")
+
 #drawing the regions
 staveTop.DrawRegions(img_edges,"large")
 staveTop.DrawRegions(img_edges,"small")
+staveTop.DrawRegions(img_edges,"ear")
 
 staveTopTemp = staveTop.getTemperatures("small")
 
@@ -152,9 +157,83 @@ staveTopTemp = staveTop.getTemperatures("small")
 if not(args.one_face):
   staveBottom.DrawRegions(img_edges,"small")
   staveBottom.DrawRegions(img_edges,"large")
+  staveBottom.DrawRegions(img_edges,"ear")
 
   staveBottomTemp = staveBottom.getTemperatures("small")
 
+#correcting the temperature for the regions around the EoS ear (see Documents/2020-09-09-EOS-Impedances.pdf)
+logging.debug("Importing variables from config file " + configFile + " in the impedanceFromCSV.py script.")
+config = configparser.ConfigParser()
+config.read(configFile)
+temperatureProfile = [float(x) for x in config["Default"]["temperatureProfile"].split(",")]
+#total heat given up by the liquid per second
+totalHeat = (float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))*float(config["Default"]["c_liquid"])*(float(config["Default"]["flow_rate"])/60.0)
+earTempTop = staveTop.getTemperatures("ear")[0]
+if not args.one_face:
+  earTempBottom = staveBottom.getTemperatures("ear")[0]
+
+fractionHeat_segment0 = (temperatureProfile[1]-temperatureProfile[0])/(temperatureProfile[-1] - temperatureProfile[0])
+fractionHeat_segment1 = (temperatureProfile[2]-temperatureProfile[1])/(temperatureProfile[-1] - temperatureProfile[0])
+fractionHeat_segment2 = (temperatureProfile[3]-temperatureProfile[2])/(temperatureProfile[-1] - temperatureProfile[0])
+
+logging.debug("fractionHeat_segment0 = {}".format(fractionHeat_segment0))
+logging.debug("fractionHeat_segment1 = {}".format(fractionHeat_segment1))
+logging.debug("fractionHeat_segment2 = {}".format(fractionHeat_segment2))
+
+earHeat = (fractionHeat_segment0+fractionHeat_segment1 - 2*fractionHeat_segment2)*totalHeat/2
+heatNextEar = (1.0 + 54.0/98)*fractionHeat_segment2*totalHeat/2
+#liquid temperature between segments 0 and 1
+liqTempAfterSeg0 = float(config["Default"]["temp_in"]) - temperatureProfile[1]*(float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))
+
+logging.debug("totalHeat = {}".format(totalHeat))
+logging.debug("earTempTop = {}".format(earTempTop))
+if not args.one_face:
+  logging.debug("earTempBottom = {}".format(earTempBottom))
+logging.debug("earHeat = {}".format(earHeat))
+logging.debug("heatNextEar = {}".format(heatNextEar))
+logging.debug("liqTempAfterSeg0 = {}".format(liqTempAfterSeg0))
+
+#dT/dQ_region_segment as described in Documents/2020-09-09-EOS-Impedances.pdf
+#importing the values from the config file
+logging.debug("Loading the correction factors from the config file:")
+dTdQ_large_0 = float(config["Default"]["dTdQ_large_0"]) #1.193
+dTdQ_large_1 = float(config["Default"]["dTdQ_large_1"]) #0.716
+dTdQ_small_0 = float(config["Default"]["dTdQ_small_0"]) #0.591
+dTdQ_small_1 = float(config["Default"]["dTdQ_small_1"]) #0.251
+dTdQ_nextEar = float(config["Default"]["dTdQ_nextEar"]) #1.152
+
+logging.debug("dTdQ_large_0 = {}".format(dTdQ_large_0))
+logging.debug("dTdQ_large_1 = {}".format(dTdQ_large_1))
+logging.debug("dTdQ_small_0 = {}".format(dTdQ_small_0))
+logging.debug("dTdQ_small_1 = {}".format(dTdQ_small_1))
+logging.debug("dTdQ_nextEar = {}".format(dTdQ_nextEar))
+
+#correcting the surface temperatures of the segments around the EoS region
+staveTop.setTemperatureCorrection("large",0, earHeat*dTdQ_large_0)
+staveTop.setTemperatureCorrection("large",1, earHeat*dTdQ_large_1)
+staveTop.setTemperatureCorrection("small",0, earHeat*dTdQ_small_0)
+staveTop.setTemperatureCorrection("small",1, earHeat*dTdQ_small_1)
+if not args.one_face:
+  staveBottom.setTemperatureCorrection("large",0, earHeat*dTdQ_large_0)
+  staveBottom.setTemperatureCorrection("large",1, earHeat*dTdQ_large_1)
+  staveBottom.setTemperatureCorrection("small",0, earHeat*dTdQ_small_0)
+  staveBottom.setTemperatureCorrection("small",1, earHeat*dTdQ_small_1)
+
+logging.debug("Temperature corrections for staveTop small regions: {}".format(str(staveTop.getTemperatureCorrections("small"))))
+logging.debug("Temperature corrections for staveTop large regions: {}".format(str(staveTop.getTemperatureCorrections("large"))))
+if not args.one_face:
+  logging.debug("Temperature corrections for staveBottom small regions: {}".format(str(staveBottom.getTemperatureCorrections("small"))))
+  logging.debug("Temperature corrections for staveBottom large regions: {}".format(str(staveBottom.getTemperatureCorrections("large"))))
+
+#computing the impedance for the ear
+earImpedanceTop = (liqTempAfterSeg0 - earTempTop - heatNextEar*dTdQ_nextEar)/earHeat
+print("Z_earTop = {}".format(earImpedanceTop))
+
+if not args.one_face:
+  earImpedanceBottom = (liqTempAfterSeg0 - earTempBottom - heatNextEar*dTdQ_nextEar)/earHeat
+  print("Z_earBottom = {}".format(earImpedanceBottom))
+
+#WIP: print the impedance on the plot as well
 
 #extracting the impedances
 largeTop = staveTop.getImpedances("large")
@@ -193,8 +272,11 @@ with open(outputFilename+".csv", "w+") as f:
         f.write(str(i)+", "+str(largeTop[i])+", "+str(smallTop[i])+"\n")
       else:
         f.write(str(i)+", "+str(largeTop[i])+", "+str(largeBottom[i])+", "+str(smallTop[i])+", "+str(smallBottom[i]) + "\n")
-f.close()
-
+  f.write("\n")
+  f.write("Z_earTop, {} \n".format(earImpedanceTop))
+  if not args.one_face:
+    f.write("Z_earBottom, {}".format(earImpedanceBottom))
+  f.close()
 
 #plotting if -g option selected
 if args.graphs:
@@ -202,26 +284,38 @@ if args.graphs:
   plt.plot(largeTop, label="Large Region: top")
   plt.plot(smallTop, label="Small Region: top")
   plt.plot(impedanceCombinedTop, label="Small Region: top combined")
+  plt.plot([-1],[earImpedanceTop],marker='o', linestyle='', label="Z_earTop")
+  if not args.one_face:
+    plt.plot([-1],[earImpedanceBottom],marker='o', linestyle='', label="Z_earBottom")
+  plt.plot()
   if not(args.one_face):
     plt.plot(largeBottom, label="Large Region: bottom")
     plt.plot(smallBottom, label="Small Region: bottom")
     plt.plot(impedanceCombinedBottom, label="Small Region: bottom combined")
   plt.xlabel("Region number")
   plt.ylabel("Thermal Impedance [K/W]")
-  plt.title("Thermal Impedances for the Stave control regions")
+  plt.title(outputFilename.split("/")[-1])
   if args.one_face:
     yrange = int(1+1.1*np.max([np.max(largeTop),np.max(smallTop)]))
   else:
     yrange = int(1+1.1*np.max([np.max(largeTop),np.max(largeBottom),np.max(smallTop),np.max(smallBottom)]))
   plt.xticks(np.arange(0, 28, 1.0))
   plt.yticks(np.arange(0, yrange, 0.5))
-  plt.axis([-0.5,27.5,0,yrange])
+  plt.axis([-2.0,27.5,0,yrange])
   plt.grid()
   plt.legend()
-  plt.text(0, -0.13*yrange, "Code version: " + gitHash + " " + gitDate[:-6], fontsize=10)
+  #ear impedances printed on the plot
+  """
+  ZearStr = "Z_earTop = {}".format(earImpedanceTop)
+  if not args.one_face:
+    ZearStr = ZearStr + "       Z_earBottom = {}".format(earImpedanceBottom)
+  plt.text(0, 0.9*yrange, ZearStr, fontsize=10, bbox=dict(facecolor='white', edgecolor='black', boxstyle='round,pad=0.5'))
+  """
+  #code version printed on the plot
+  plt.text(0, -0.13*yrange, "Code version: {} {}".format(gitHash, gitDate[:-6]), fontsize=10)
   plt.savefig(outputFilename + ".png")
   print("Outputing graphical output into a file: " + outputFilename + ".png")
-  
+
 
 if args.debug:
   plt.clf()
