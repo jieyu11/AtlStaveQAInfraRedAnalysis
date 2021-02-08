@@ -89,9 +89,6 @@ def test_addingRegions(correctRatioStave):
   with pytest.raises(Exception):
     correctRatioStave.AddRegion(0.1,-0.6,0.1,0.3,"type A")
   
-  with pytest.raises(Exception):
-    correctRatioStave.AddRegion(-0.1,0.6,0.1,0.3,"type A")
-  
   correctRatioStave.AddRegion(0.2,0.3,0.1,0.6,"")
   correctRatioStave.AddRegion(0.5,0.64,0.14,0.23,"")
   
