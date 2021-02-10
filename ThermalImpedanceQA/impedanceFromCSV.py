@@ -284,14 +284,16 @@ if args.graphs:
   plt.plot(largeTop, label="Large Region: top")
   plt.plot(smallTop, label="Small Region: top")
   plt.plot(impedanceCombinedTop, label="Small Region: top combined")
-  plt.plot([-1],[earImpedanceTop],marker='o', linestyle='', label="Z_earTop")
-  if not args.one_face:
-    plt.plot([-1],[earImpedanceBottom],marker='o', linestyle='', label="Z_earBottom")
-  plt.plot()
+
   if not(args.one_face):
     plt.plot(largeBottom, label="Large Region: bottom")
     plt.plot(smallBottom, label="Small Region: bottom")
     plt.plot(impedanceCombinedBottom, label="Small Region: bottom combined")
+    
+  plt.plot([-1],[earImpedanceTop],marker='o', linestyle='', label="Z_earTop")
+  if not args.one_face:
+    plt.plot([-1],[earImpedanceBottom],marker='o', linestyle='', label="Z_earBottom")
+  
   plt.xlabel("Region number")
   plt.ylabel("Thermal Impedance [K/W]")
   plt.title(outputFilename.split("/")[-1])
@@ -303,7 +305,7 @@ if args.graphs:
   plt.yticks(np.arange(0, yrange, 0.5))
   plt.axis([-2.0,27.5,0,yrange])
   plt.grid()
-  plt.legend()
+  plt.legend(ncol=3)
   #ear impedances printed on the plot
   """
   ZearStr = "Z_earTop = {}".format(earImpedanceTop)
