@@ -298,7 +298,7 @@ class Stave:
       temperatureCorrections.append(region.temperatureCorrection)
     return temperatureCorrections
 
-  def getImpedances(self,regionType):
+  def getImpedances(self,regionType, heatCorrection = False):
     logging.debug("Calculating impedances of region type '" + str(regionType) + "'")
     regionTemp = self.getTemperatures(regionType)
     tempCorrections = self.getTemperatureCorrections(regionType)
@@ -329,11 +329,24 @@ class Stave:
       logging.error("The number of temperature profile data points does not match the number of regions.")
       raise Exception("The number of temperature profile data points does not match the number of regions.")
 
+    heat = []
+
     for i in range(0,len(regionTemp)):
       #divide by two to get the heat only for one part
-      heat = abs(liquidTemperature[i] - liquidTemperature[i+1])*self.__heatCapacity*0.5*flowRateKgPerSec
+      heat.append(abs(liquidTemperature[i] - liquidTemperature[i+1])*self.__heatCapacity*0.5*flowRateKgPerSec)
+
+    #heat correction: first two segments have the same heat as the third one
+    if heatCorrection:
+      logging.debug("Applying the heat correction.")
+      heat[0] = heat[2]
+      heat[1] = heat[2]
+    
+    logging.debug("heat = " + str(heat))
+
+    for i in range(0,len(regionTemp)):
+      #divide by two to get the heat only for one part
       averageTempDiff = abs((liquidTemperature[i]+liquidTemperature[i+1])/2 - regionTemp[i] - tempCorrections[i])
-      impedances.append(averageTempDiff/heat)
+      impedances.append(averageTempDiff/heat[i])
 
     logging.debug("impedances = " +str(impedances))
 
