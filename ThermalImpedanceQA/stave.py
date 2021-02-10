@@ -168,6 +168,8 @@ class Stave:
       self.__regions[type] = []
       self.__regions[type].append(newRegion)
 
+    newRegion.setIndex(len(self.__regions[type])-1)
+
   def AddUBendRegion(self, rxLeft, rxRight, ryTop, ryBottom, rradius, rlength, type, bend="downwards"):
     """
     Adding the U-bend regions used at the end of the stave where the pipe is U-shaped
@@ -240,6 +242,7 @@ class Stave:
     regions_image = cv2.rectangle(regions_image, (xLeft2,yTop2), (xRight2,yBottom2), 1, -1)
 
     newRegion = GeneralRegion(self.__globalImg, regions_image)
+
 
     if type in self.__regions:
       self.__regions[type].append(newRegion)
@@ -345,7 +348,11 @@ class Region:
     self.__img = globalImg[int(yTop):int(yBottom),int(xLeft):int(xRight)]
     self.__averageTemperature = np.mean(self.__img)
     self.temperatureCorrection = 0.0
+    self.__index = -1
 
+  def setIndex(self, index):
+    self.__index = index
+  
   def getAverageTemperature(self):
     return self.__averageTemperature
 
@@ -357,6 +364,7 @@ class Region:
 
   def DrawRegion(self, imgToBeImprinted, thickness):
     cv2.rectangle(imgToBeImprinted,(int(self.__xLeft),int(self.__yTop)),(int(self.__xRight),int(self.__yBottom)),(0,0,0),thickness=thickness)
+    cv2.putText(imgToBeImprinted, str(self.__index), (int(self.__xLeft), int(self.__yTop)), cv2.FONT_HERSHEY_SIMPLEX, 4.0, (255, 255, 255), 8)
 
 
 
