@@ -236,11 +236,11 @@ if not args.one_face:
 #WIP: print the impedance on the plot as well
 
 #extracting the impedances
-largeTop = staveTop.getImpedances("large")
+largeTop = staveTop.getImpedances("large", heatCorrection=True)
 smallTop = staveTop.getImpedances("small")
 
 if not(args.one_face):
-  largeBottom = staveBottom.getImpedances("large")
+  largeBottom = staveBottom.getImpedances("large", heatCorrection=True)
   smallBottom = staveBottom.getImpedances("small")
 
 #compute the combined impedance
