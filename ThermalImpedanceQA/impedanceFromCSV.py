@@ -101,13 +101,13 @@ numModules = 14
 for i in range(numModules):
   staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.0,0.5,"large")
   if not(args.one_face):
-    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.0,0.5,"large")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5,1.0,"large")
 
 #large regions - return pipe
 for i in reversed(range(numModules)):
   staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5,1.0,"large")
   if not(args.one_face):
-    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.5,1.0,"large")
+    staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.0,0.5,"large")
 
 #small regions above the pipe
 for i in range(numModules):
@@ -115,30 +115,30 @@ for i in range(numModules):
   if i == 0:
     staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
     if not(args.one_face):
-      staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
+      staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
   elif i==13:
     staveTop.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.247826,0.317391,0.13,0.0869565,"small",bend="downwards")
     if not(args.one_face):
-      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.247826,0.317391,0.13,0.0869565,"small",bend="downwards")
+      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.682609,0.752174,0.13,0.0869565,"small",bend="upwards")
   else:
     staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
     if not(args.one_face):
-      staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
+      staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
 #small regions above the pipe (return pipe)
 for i in reversed(range(numModules)):
   #exception for near-edge regions
   if i == 0:
     staveTop.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
     if not(args.one_face):
-      staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
+      staveBottom.AddRegion(i*1.0/numModules + 0.1/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
   elif i==13:
     staveTop.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.682609,0.752174,0.13,0.0869565,"small",bend="upwards")
     if not(args.one_face):
-      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.682609,0.752174,0.13,0.0869565,"small",bend="upwards")
+      staveBottom.AddUBendRegion(i*1.0/numModules,(i+1)*1.0/numModules - 0.0174545,0.247826,0.317391,0.13,0.0869565,"small",bend="downwards")
   else:
     staveTop.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
     if not(args.one_face):
-      staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.682609,0.752174,"small")
+      staveBottom.AddRegion(i*1.0/numModules,(i+1)*1.0/numModules,0.247826,0.317391,"small")
 
 #end-of-stave ear region
 #the region is defined to stay safely away from the edges: in x direction 0.1 of module length is subtracted from both sides; for y direction it's 5% of the stave width
