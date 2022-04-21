@@ -13,9 +13,13 @@ First initialize the virtual environment
 ```bash
 python -m venv ./env
 ```
-and activate it
+and activate it.
 ```bash
 source env/bin/activate
+```
+In Windows Command Prompt the activation is slightly different
+```bash
+venv\Scripts\activate.bat
 ```
 Install the required modules
 ```bash
