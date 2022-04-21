@@ -4,7 +4,7 @@ This code takes an IR image (in the CSV format) of a stave and outputs the therm
 
 
 ## Dependencies
-* Python >= 3.8
+* Python 3.8
 
 ## Installation
 
@@ -19,7 +19,7 @@ source env/bin/activate
 ```
 In Windows Command Prompt the activation is slightly different
 ```bash
-venv\Scripts\activate.bat
+env\Scripts\activate.bat
 ```
 Install the required modules
 ```bash
