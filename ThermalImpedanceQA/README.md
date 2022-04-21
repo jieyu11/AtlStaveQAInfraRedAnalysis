@@ -4,70 +4,36 @@ This code takes an IR image (in the CSV format) of a stave and outputs the therm
 
 
 ## Dependencies
-* Anaconda 3 (for pytest, numpy, configparsers etc.)
-* OpenCV
-
-The code has been tested with Python 3.7.9, OpenCV version 3.4.2 (on Linux) and version 4.5.0 (on Windows).
+* Python 3.8
 
 ## Installation
 
-Download and install [Anaconda](https://www.anaconda.com/products/individual) to manage the dependencies. Make sure Anaconda is added to the system PATH variable.
-
-First initialize Anaconda:
+First initialize the virtual environment
 
 ```bash
-conda init bash
+python -m venv ./env
 ```
-And set the auto-activation to false to prevent Anaconda initializing automatically whenever a new shell window is opened:
+and activate it.
 ```bash
-conda config --set auto_activate_base false
+source env/bin/activate
 ```
-Restart the shell.
-The evironment can be now activated through:
+In Windows Command Prompt the activation is slightly different
 ```bash
-conda actiavte
+env\Scripts\activate.bat
 ```
-
-You can check the list of all modules installed
+Install the required modules
 ```bash
-conda list
+pip install -r requirements.txt
 ```
-and make sure they are all up-to-date with
+The virtual environment can be deactivated via
 ```bash
-conda update --all
-```
-Some required packages won't be in the default Anaconda envirnoment and they need to be installed:
-```bash
-conda install opencv
-```
-Activate the executables:
-```bash
-chmod +x *.py
-```
-Finally make sure your python version is 3.7.x or newer
-```bash
-python --version
-```
-and all dependencies are correclty installed:
-```bash
-./test_dependencies.py
-```
-If you get no errors you are good to go.
-
-At the end you may want to deactivate Anaconda:
-```bash
-conda deactivate
+deactivate
 ```
 
 ## Usage
-After opening a shell make sure you activate the envirnoment
+Don't forget to activate the virtual environment before running the script
 ```bash
-conda actiavte
-```
-
-When you are done you can deactivate the environment
-```bash
-conda deactivate
+source env/bin/activate
 ```
 
 ```
