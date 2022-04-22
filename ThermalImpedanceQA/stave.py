@@ -41,6 +41,7 @@ class Stave:
     self.__Tout = float(config["Default"]["temp_out"])
     self.__heatCapacity = float(config["Default"]["c_liquid"])
     self.__FR = float(config["Default"]["flow_rate"])
+    self.__liquid_density = float(config["Default"]["liquid_density"])
     self.__temperatureProfile = [float(x) for x in config["Default"]["temperatureProfile"].split(",")]
 
     #print the imported variables
@@ -313,8 +314,9 @@ class Stave:
     #shift it to match Tin
     liquidTemperature = [x+(self.__Tin-liquidTemperature[0]) for x in liquidTemperature]
 
-    #in the config file the units are liters per minute
-    flowRateKgPerSec = self.__FR/60
+    # in the config file the units are liters per minute
+    # to convert the FR to m3/s (cubic meters per second), FR is divided by 60(minute->seconds) and 1000(liter->cubic meters)
+    flowRateKgPerSec = (self.__FR/(60*1000))*self.__liquid_density
 
     logging.debug("liquidTemperature after scaling = " + str(liquidTemperature))
     logging.debug("flowRateKgPerSec = " + str(flowRateKgPerSec))
