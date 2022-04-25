@@ -38,6 +38,7 @@ class Stave:
     config.read(configFile)
 
     self.__regime = config["Default"]["regime"]
+    assert(self.__regime == "hot" or self.__regime == "cold")
     self.__Tin = float(config["Default"]["temp_in"])
     self.__Tout = float(config["Default"]["temp_out"])
     self.__heatCapacity = float(config["Default"]["c_liquid"])
