@@ -167,7 +167,8 @@ config = configparser.ConfigParser()
 config.read(configFile)
 temperatureProfile = [float(x) for x in config["Default"]["temperatureProfile"].split(",")]
 #total heat given up by the liquid per second
-totalHeat = (float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))*float(config["Default"]["c_liquid"])*(float(config["Default"]["flow_rate"])/60.0)
+flowRateKgPerSec = (float(config["Default"]["flow_rate"])/(60*1000))*float(config["Default"]["liquid_density"])
+totalHeat = (float(config["Default"]["temp_in"])-float(config["Default"]["temp_out"]))*float(config["Default"]["c_liquid"])*flowRateKgPerSec
 earTempTop = staveTop.getTemperatures("ear")[0]
 if not args.one_face:
   earTempBottom = staveBottom.getTemperatures("ear")[0]

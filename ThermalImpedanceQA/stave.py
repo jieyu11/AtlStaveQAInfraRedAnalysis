@@ -37,6 +37,8 @@ class Stave:
     config = configparser.ConfigParser()
     config.read(configFile)
 
+    self.__regime = config["Default"]["regime"]
+    assert(self.__regime == "hot" or self.__regime == "cold")
     self.__Tin = float(config["Default"]["temp_in"])
     self.__Tout = float(config["Default"]["temp_out"])
     self.__heatCapacity = float(config["Default"]["c_liquid"])
@@ -81,9 +83,9 @@ class Stave:
 
     projection = np.sum(gradient, axis=1)
 
-    upperEdge = np.argmax(projection)
+    upperEdge = np.argmax(projection) if self.__regime == "hot" else np.argmin(projection)
     logging.debug("upperEdge = " + str(upperEdge))
-    lowerEdge = np.argmin(projection)
+    lowerEdge = np.argmin(projection) if self.__regime == "hot" else np.argmax(projection)
     logging.debug("lowerEdge = " + str(lowerEdge))
 
     strip = imgOfInterest[upperEdge:lowerEdge,:]
@@ -92,9 +94,9 @@ class Stave:
 
     stripProjection = np.sum(stripGradient, axis=0)
 
-    leftEdge = np.argmax(stripProjection)
+    leftEdge = np.argmax(stripProjection) if self.__regime == "hot" else np.argmin(stripProjection)
     logging.debug("leftEdge = " + str(leftEdge))
-    rightEdge = np.argmin(stripProjection)
+    rightEdge = np.argmin(stripProjection) if self.__regime == "hot" else np.argmax(stripProjection)
     logging.debug("rightEdge = " + str(rightEdge))
 
     ratioMeasured = abs(1.0*(rightEdge-leftEdge)/(lowerEdge-upperEdge))
