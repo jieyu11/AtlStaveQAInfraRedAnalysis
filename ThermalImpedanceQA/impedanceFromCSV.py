@@ -37,9 +37,10 @@ if inputFile[-3:] != "csv":
 
 #delete the debug folder if it exists and create a new one
 if args.debug:
-  if "debug_output" in os.listdir("."):
-    os.system("rm -r debug_output")
-  os.mkdir("debug_output")
+  if not os.path.isdir("debug_output"):
+    os.mkdir("debug_output")
+  if os.path.isfile("debug_output/debug.log"):
+    os.remove("debug_output/debug.log")
 
 #create the output folder if it doesn't exist
 if not "output" in os.listdir("."):
