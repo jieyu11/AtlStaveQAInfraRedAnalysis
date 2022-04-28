@@ -26,7 +26,7 @@ class Stave:
     self.__yBottom = 0
     self.__regions = {} # dictionary
     self.__staveRatio = 11.957 #length:width ratio for sanity check
-    self.__staveRatioTolerance = 0.05 # 5% tolerance on the stave length/width ratio
+    self.__staveRatioTolerance = 0.07 # 7% tolerance on the stave length/width ratio
     self.__lineThickness = 2 #thickness of the line that is used for drawing the regions
 
     #importing data from the config file

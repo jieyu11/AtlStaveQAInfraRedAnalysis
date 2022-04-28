@@ -82,8 +82,8 @@ img_edges = staveTop.getImage()
 if args.one_face:
   staveTop.FindStaveWithin(0,1.0,0,1.0)
 else:
-  staveTop.FindStaveWithin(0,1.0,0,0.5)
-  staveBottom.FindStaveWithin(0,1.0,0.5,1.0)
+  staveTop.FindStaveWithin(0,1.0,0,0.48)
+  staveBottom.FindStaveWithin(0,1.0,0.54,1.0)
 #print the positions of the staves
 print("Staves' edges found at:")
 staveTop.Echo()
