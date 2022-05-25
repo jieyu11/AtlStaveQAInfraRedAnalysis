@@ -24,6 +24,8 @@ parser.add_argument("config", help="The path to the configuration file")
 parser.add_argument("-d","--debug", help="Runs the code in debug mode", action="store_true")
 parser.add_argument("-g","--graphs", help="Outputs the graph", action="store_true")
 parser.add_argument("-1f","--one_face", help="Using IR image with one face only", action="store_true")
+parser.add_argument("-L","--L_flip", help="Flips the input image horizontally  before processing.", action="store_true")
+parser.add_argument("-J","--J_flip", help="Flips the input image both vertically and horizontally before processing.", action="store_true")
 args = parser.parse_args()
 
 
@@ -50,6 +52,10 @@ if not "output" in os.listdir("."):
 if args.debug:
   logging.basicConfig(filename='debug_output/debug.log',level=logging.DEBUG)
 
+if args.L_flip and args.J_flip:
+  print("Cannot have both L and J flip options activated at the same time. Exiting...")
+  exit()
+
 #get the git version of the code so it can be printed on the output graphs
 gitHash = os.popen('git rev-parse --short HEAD').read()[:-2]
 gitDate = os.popen('git log -1 --format=%cd').read()
@@ -64,6 +70,13 @@ with open(inputFile) as csvfile:
   for row in reader:
     imgList.append(row)
 image = np.array(imgList)
+
+if args.L_flip:
+  image = np.flip(image,axis=1)
+
+if args.J_flip:
+  image = np.flip(image,axis=0)
+  image = np.flip(image,axis=1)
 
 #creating the staves + loading the parameters from the config file
 staveTop = Stave(image, configFile)
