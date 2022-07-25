@@ -2,7 +2,7 @@
 """
 Created on Mon Jul  6 11:16:24 2020
 
-@author: LuBoss
+@author: Lubos (vozdeckyl@gmail.com)
 
 Script that converts the FEA Abaqus output into a CSV file.
 A file with settings named "settings.txt" is required.
