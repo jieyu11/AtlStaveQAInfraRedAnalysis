@@ -31,15 +31,15 @@ with open("abaqus.rpt", "r") as file:
     for line in file:
         tempLines.append(line)
 
-tempLines = tempLines[19:] 
+tempLines = tempLines[19:]
 
 tempLinesSplit = []
 
 for line in tempLines:
-    split = line.split("         ")
+    split = [s for s in line.split(" ") if s!=""]
     if len(split) <= 1:
         break
-    tempLinesSplit.append([int(split[1].replace(" ","")), float(split[2].replace("\n",""))])
+    tempLinesSplit.append([int(split[0]), float(split[1])])
         
 
 export = False
